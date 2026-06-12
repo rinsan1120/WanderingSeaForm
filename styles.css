@@ -552,8 +552,8 @@ a {
 
 .field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
+  grid-template-columns: 1fr;
+  gap: 24px;
 }
 
 .form-field + .form-field--body,
