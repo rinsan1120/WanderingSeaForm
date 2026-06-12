@@ -417,9 +417,7 @@ submitLetterButton.addEventListener("click", async () => {
   } catch (error) {
     console.error("投函に失敗しました。", error);
 
-    window.alert(
-      "投函に失敗しました。入力内容は保持されています。時間をおいて再度お試しください。"
-    );
+   window.alert(error.message);
 
     submitLetterButton.disabled = false;
   }
