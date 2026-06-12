@@ -4,6 +4,7 @@ const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXF5NHG1mrkaOJBqbXRmlotvcX9If5d_lqa2xnDSSzA3LzJF4rishV5KLZmndcasquQg/exec";
+const FAQ_CONTENT_URL = "content/faq.txt";
 
 const draftStorage = {
   get() {
@@ -71,6 +72,8 @@ const submissionSceneStatus = document.getElementById("submissionSceneStatus");
 const submissionResult = document.getElementById("submissionResult");
 const writeAnotherButton = document.getElementById("writeAnotherButton");
 const siteHeader = document.querySelector(".site-header");
+const faqList = document.getElementById("faqList");
+const faqStatus = document.getElementById("faqStatus");
 const openLetterRulesButton =
   document.getElementById("openLetterRulesButton");
 
@@ -91,6 +94,122 @@ let isSubmitting = false;
 let hasAttemptedSubmit = false;
 let ngWordsStatus = "loading";
 let normalizedNgWords = [];
+
+function parseFaqContent(content) {
+  const faqItems = [];
+  let currentQuestion = null;
+  let answerLines = null;
+
+  function commitCurrentItem() {
+    if (currentQuestion && answerLines) {
+      const answer = answerLines.join("\n").trim();
+      if (answer) {
+        faqItems.push({
+          question: currentQuestion,
+          answer
+        });
+      }
+    }
+
+    currentQuestion = null;
+    answerLines = null;
+  }
+
+  String(content).replace(/\r\n?/g, "\n").split("\n").forEach((line) => {
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.startsWith("(Q)")) {
+      commitCurrentItem();
+      currentQuestion = trimmedLine.slice(3).trim() || null;
+      return;
+    }
+
+    if (trimmedLine.startsWith("(A)")) {
+      if (currentQuestion) {
+        answerLines = [trimmedLine.slice(3).trim()];
+      }
+      return;
+    }
+
+    if (currentQuestion && answerLines) {
+      answerLines.push(trimmedLine);
+    }
+  });
+
+  commitCurrentItem();
+  return faqItems;
+}
+
+function createFaqBadge(label) {
+  const badge = document.createElement("span");
+  badge.className = "faq-badge";
+  badge.setAttribute("aria-hidden", "true");
+  badge.textContent = label;
+  return badge;
+}
+
+function renderFaqItems(faqItems) {
+  faqList.replaceChildren();
+
+  faqItems.forEach(({ question, answer }) => {
+    const item = document.createElement("details");
+    item.className = "faq-item";
+
+    const questionSummary = document.createElement("summary");
+    questionSummary.className = "faq-question";
+    questionSummary.append(createFaqBadge("Q"));
+
+    const questionText = document.createElement("span");
+    questionText.textContent = question;
+    questionSummary.append(questionText);
+
+    const toggle = document.createElement("span");
+    toggle.className = "faq-toggle";
+    toggle.setAttribute("aria-hidden", "true");
+    questionSummary.append(toggle);
+
+    const answerWrapper = document.createElement("div");
+    answerWrapper.className = "faq-answer";
+    answerWrapper.append(createFaqBadge("A"));
+
+    const answerContent = document.createElement("div");
+    answerContent.className = "faq-answer-content";
+    answer.split(/\n\s*\n/).forEach((paragraph) => {
+      const paragraphElement = document.createElement("p");
+      paragraphElement.textContent = paragraph;
+      answerContent.append(paragraphElement);
+    });
+    answerWrapper.append(answerContent);
+
+    item.append(questionSummary, answerWrapper);
+    faqList.append(item);
+  });
+}
+
+async function loadFaqContent() {
+  try {
+    const response = await fetch(FAQ_CONTENT_URL, {
+      cache: "no-cache"
+    });
+
+    if (!response.ok) {
+      throw new Error(`FAQの取得に失敗しました（HTTP ${response.status}）。`);
+    }
+
+    const faqItems = parseFaqContent(await response.text());
+    if (faqItems.length === 0) {
+      faqStatus.textContent = "現在、掲載中のよくあるご質問はありません。";
+      return;
+    }
+
+    renderFaqItems(faqItems);
+    faqStatus.hidden = true;
+  } catch (error) {
+    console.error("よくあるご質問の読み込みに失敗しました。", error);
+    faqStatus.textContent =
+      "よくあるご質問を読み込めませんでした。\n時間をおいて再度お試しください。";
+  }
+}
 
 async function openLetterRulesModal() {
   letterRulesModal.showModal();
@@ -572,3 +691,4 @@ restoreDraft();
 
 // ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();
+loadFaqContent();
