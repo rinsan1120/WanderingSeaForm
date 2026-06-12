@@ -321,10 +321,16 @@ function closeSubmissionScene() {
   }, 500);
 }
 
-form.addEventListener("input", () => {
-  updateCharacterCounts();
-  updateValidationState();
-  scheduleDraftSave();
+[
+  senderNameInput,
+  titleInput,
+  bodyInput
+].forEach((input) => {
+  input.addEventListener("input", () => {
+    updateCharacterCounts();
+    updateValidationState();
+    scheduleDraftSave();
+  });
 });
 
 form.addEventListener("change", () => {
