@@ -114,6 +114,12 @@ a {
   letter-spacing: 0.22em;
 }
 
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
 .header-link {
   position: relative;
   color: var(--text-sub);
