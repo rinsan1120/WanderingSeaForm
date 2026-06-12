@@ -146,7 +146,9 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
   setFieldError(
     bodyInput,
     bodyError,
-    ngWordErrors.body ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.body : ""
+    ngWordErrors.body
+      ? NG_WORD_ERROR_MESSAGE
+      : baseErrors.body
   );
   agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
   agreementInput.setAttribute("aria-invalid", showBaseErrors && baseErrors.agreement ? "true" : "false");
