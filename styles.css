@@ -768,21 +768,34 @@ textarea[aria-invalid="true"] {
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
-
-  padding: 76px 32px;
-  text-align: center;
+  padding: 34px 30px 36px;
+  text-align: left;
   background:
-    linear-gradient(rgba(15, 29, 51, 0.9), rgba(11, 19, 37, 0.97)),
-    radial-gradient(circle at 50% 20%, rgba(96, 165, 250, 0.3), transparent 43%);
+    linear-gradient(180deg, rgba(17, 28, 49, 0.94), rgba(12, 21, 38, 0.98)),
+    repeating-linear-gradient(0deg, transparent 0 42px, rgba(255,255,255,0.02) 43px);
   border: 1px solid var(--line);
+  border-left: 4px solid var(--accent-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
 
-.trust-panel p:last-child {
-  max-width: 720px;
-  margin: 20px auto 0;
+.trust-panel .section-heading__en {
+  margin-bottom: 3px;
   color: var(--text-sub);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+}
+
+.trust-panel h2 {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.trust-panel h2 + p {
+  max-width: none;
+  margin: 18px 0 0;
+  color: var(--text-sub);
+  font-size: 0.76rem;
 }
 
 .site-footer {
