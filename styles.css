@@ -998,7 +998,14 @@ textarea[aria-invalid="true"] {
 }
 
 .contact-section-content {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
   padding: 34px 30px 36px;
+}
+
+.contact-section-content .button {
+  align-self: flex-end;
 }
 
 .trust-panel .section-heading__en {
