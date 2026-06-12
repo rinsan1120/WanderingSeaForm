@@ -1171,19 +1171,7 @@ textarea[aria-invalid="true"] {
   margin-bottom: 0;
 }
 
-.field-help-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px 12px;
-  color: var(--accent-strong);
-  background: rgba(96, 165, 250, 0.08);
-  border: 1px solid rgba(96, 165, 250, 0.35);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  cursor: pointer;
-}
+
 .submission-sea {
   position: absolute;
   inset: auto 0 0;
