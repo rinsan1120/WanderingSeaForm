@@ -164,7 +164,7 @@ function handlePublicationStatusResponse(data) {
 
   if (publicationStatusText) {
     publicationStatusText.textContent =
-      `掲載状況：${formattedDate}頃までに投函されたお手紙を掲載しています。`;
+      `掲載状況：　${formattedDate}　までに投函されたお手紙を掲載しています。`;
   }
 }
 
