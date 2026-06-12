@@ -3,7 +3,7 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhAPkH6Wx-HXGuIWm21XgnyYidZUtEJMSXjlej6jKKuR28neRXYc8ceyqUq8hgKKDNoQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwGiTvXbh6S1l5U4wHv27VhFIhLWc9dVXEy4Sihackg05XM6bmD-tybZ3sVSzyzVNCbhg/exec";
 
 const draftStorage = {
   get() {
