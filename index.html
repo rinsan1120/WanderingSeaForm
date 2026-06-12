@@ -82,6 +82,10 @@
           </div>
 
           <form id="submissionForm" novalidate>
+            <p class="field-error form-load-error" id="ngWordsLoadError" role="alert" hidden>
+              入力内容の確認機能を読み込めませんでした。時間をおいて再度お試しください。
+            </p>
+
             <div class="field-row">
               <div class="form-field">
                 <label for="senderName">
@@ -172,7 +176,7 @@
 
             <div class="form-actions">
               <button class="button button--ghost" id="clearDraftButton" type="button">下書きを消す</button>
-              <button class="button button--primary" type="submit">投函前に確認する</button>
+              <button class="button button--primary" id="confirmSubmissionButton" type="submit" disabled>投函前に確認する</button>
             </div>
           </form>
         </div>

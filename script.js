@@ -1,6 +1,8 @@
 const DRAFT_STORAGE_KEY = "hyohaku-letter-form-draft-v1";
 const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
+const NG_WORDS_URL = "content/ng-words.json";
+const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
 
 const draftStorage = {
   get() {
@@ -22,7 +24,7 @@ const draftStorage = {
   },
   remove() {
     try {
-      window.draftStorage.remove();
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch (error) {
       console.warn("下書き保存を利用できない環境です。", error);
     }
@@ -35,7 +37,9 @@ const titleInput = document.getElementById("title");
 const bodyInput = document.getElementById("body");
 const agreementInput = document.getElementById("agreement");
 const clearDraftButton = document.getElementById("clearDraftButton");
+const confirmSubmissionButton = document.getElementById("confirmSubmissionButton");
 const draftStatus = document.getElementById("draftStatus");
+const ngWordsLoadError = document.getElementById("ngWordsLoadError");
 
 const senderNameCount = document.getElementById("senderNameCount");
 const titleCount = document.getElementById("titleCount");
@@ -62,6 +66,9 @@ const siteHeader = document.querySelector(".site-header");
 
 let saveTimer = null;
 let isSubmitting = false;
+let hasAttemptedSubmit = false;
+let ngWordsStatus = "loading";
+let normalizedNgWords = [];
 
 function getFormData() {
   return {
@@ -83,39 +90,113 @@ function setFieldError(input, errorElement, message) {
   input.setAttribute("aria-invalid", message ? "true" : "false");
 }
 
-function validateForm() {
+function normalizeForNgWordCheck(value) {
+  return String(value)
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\s\u3000]+/g, "");
+}
+
+function containsNgWord(value) {
+  if (ngWordsStatus !== "ready") return false;
+  const normalizedValue = normalizeForNgWordCheck(value);
+  return normalizedNgWords.some((word) => normalizedValue.includes(word));
+}
+
+function getValidationState() {
   const data = getFormData();
-  let isValid = true;
+  const baseErrors = {
+    senderName: data.senderName ? "" : "差出人を入力してください。",
+    title: data.title ? "" : "標題を入力してください。",
+    body: !data.body
+      ? "本文を入力してください。"
+      : data.body.length < 10
+        ? "本文は10文字以上で入力してください。"
+        : "",
+    agreement: data.agreement ? "" : "内容を確認し、同意欄にチェックを入れてください。"
+  };
+  const ngWordErrors = {
+    senderName: containsNgWord(senderNameInput.value),
+    title: containsNgWord(titleInput.value),
+    body: containsNgWord(bodyInput.value)
+  };
+  const hasBaseError = Object.values(baseErrors).some(Boolean);
+  const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
 
-  setFieldError(senderNameInput, senderNameError, "");
-  setFieldError(titleInput, titleError, "");
-  setFieldError(bodyInput, bodyError, "");
-  agreementError.textContent = "";
+  return {
+    baseErrors,
+    ngWordErrors,
+    isValid: ngWordsStatus === "ready" && !hasBaseError && !hasNgWordError
+  };
+}
 
-  if (!data.title) {
-    setFieldError(titleInput, titleError, "標題を入力してください。");
-    isValid = false;
-  }
+function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSubmit) {
+  const { baseErrors, ngWordErrors } = validationState;
 
-  if (!data.body) {
-    setFieldError(bodyInput, bodyError, "本文を入力してください。");
-    isValid = false;
-  } else if (data.body.length < 10) {
-    setFieldError(bodyInput, bodyError, "本文は10文字以上で入力してください。");
-    isValid = false;
-  }
+  setFieldError(
+    senderNameInput,
+    senderNameError,
+    ngWordErrors.senderName ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.senderName : ""
+  );
+  setFieldError(
+    titleInput,
+    titleError,
+    ngWordErrors.title ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.title : ""
+  );
+  setFieldError(
+    bodyInput,
+    bodyError,
+    ngWordErrors.body ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.body : ""
+  );
+  agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
+  agreementInput.setAttribute("aria-invalid", showBaseErrors && baseErrors.agreement ? "true" : "false");
+}
 
-  if (!data.agreement) {
-    agreementError.textContent = "内容を確認し、同意欄にチェックを入れてください。";
-    isValid = false;
-  }
+function updateValidationState({ showBaseErrors = hasAttemptedSubmit } = {}) {
+  const validationState = getValidationState();
+  renderValidationErrors(validationState, showBaseErrors);
+  confirmSubmissionButton.disabled = !validationState.isValid;
+  return validationState;
+}
 
-  if (!isValid) {
+function validateForm() {
+  hasAttemptedSubmit = true;
+  const validationState = updateValidationState({ showBaseErrors: true });
+
+  if (!validationState.isValid) {
     const firstInvalid = form.querySelector('[aria-invalid="true"], input:invalid');
     firstInvalid?.focus();
   }
 
-  return isValid;
+  return validationState.isValid;
+}
+
+async function loadNgWords() {
+  ngWordsStatus = "loading";
+  ngWordsLoadError.hidden = true;
+  updateValidationState();
+
+  try {
+    const response = await fetch(NG_WORDS_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`NGワード一覧の取得に失敗しました（HTTP ${response.status}）。`);
+    }
+
+    const data = await response.json();
+    if (!data || !Array.isArray(data.words) || data.words.some((word) => typeof word !== "string")) {
+      throw new Error("NGワード一覧のJSON形式が不正です。");
+    }
+
+    normalizedNgWords = [...new Set(data.words.map(normalizeForNgWordCheck).filter(Boolean))];
+    ngWordsStatus = "ready";
+  } catch (error) {
+    console.error("NGワード一覧の読み込みに失敗しました。", error);
+    normalizedNgWords = [];
+    ngWordsStatus = "error";
+    ngWordsLoadError.hidden = false;
+  }
+
+  updateValidationState();
 }
 
 function saveDraft() {
@@ -159,6 +240,7 @@ function restoreDraft() {
   }
 
   updateCharacterCounts();
+  updateValidationState();
 }
 
 function clearDraft({ askConfirmation = true } = {}) {
@@ -172,15 +254,9 @@ function clearDraft({ askConfirmation = true } = {}) {
   form.reset();
   draftStorage.remove();
   draftStatus.textContent = "下書きを削除しました";
+  hasAttemptedSubmit = false;
   updateCharacterCounts();
-
-  [
-    [senderNameInput, senderNameError],
-    [titleInput, titleError],
-    [bodyInput, bodyError]
-  ].forEach(([input, errorElement]) => setFieldError(input, errorElement, ""));
-
-  agreementError.textContent = "";
+  updateValidationState({ showBaseErrors: false });
 }
 
 function openPreview() {
@@ -247,10 +323,14 @@ function closeSubmissionScene() {
 
 form.addEventListener("input", () => {
   updateCharacterCounts();
+  updateValidationState();
   scheduleDraftSave();
 });
 
-form.addEventListener("change", scheduleDraftSave);
+form.addEventListener("change", () => {
+  updateValidationState();
+  scheduleDraftSave();
+});
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -294,3 +374,6 @@ document.querySelectorAll(".reveal").forEach((element) => {
 });
 
 restoreDraft();
+
+// ブラウザ側の判定は即時フィードバック用。GAS連携時は同じ条件をサーバー側でも必ず検証する。
+loadNgWords();
