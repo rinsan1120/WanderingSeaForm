@@ -355,9 +355,11 @@ async function sendLetterToGas() {
 
   const result = await response.json();
 
-  if (!result.success) {
-    throw new Error("GASへの保存に失敗しました。");
-  }
+if (!result.success) {
+  throw new Error(
+    result.message || "GASへの保存に失敗しました。"
+  );
+}
 
   return result;
 }
