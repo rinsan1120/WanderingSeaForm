@@ -133,10 +133,20 @@
             </div>
 
             <div class="form-field form-field--body">
+            <div class="field-label-row">
               <label for="body">
                 本文
                 <span class="field-required">必須</span>
               </label>
+
+              <button
+                class="field-help-button"
+                id="openLetterRulesButton"
+                type="button"
+              >
+                お手紙に関する注意事項
+              </button>
+            </div>
               <span class="field-note">
                 ・禁止事項が含まれているお手紙はご投函いただいても掲載できません。必ず事前に禁止事項をご確認ください。<br>
                 ・お写真のご投函は、下部のお問い合わせボタンより駅長あてに「差出人」「標題」を添えてご依頼くださいませ。<br>（1通につき1枚まで）
@@ -279,5 +289,38 @@
     </div>
     <div class="submission-sea" aria-hidden="true"></div>
   </div>
+
+  <dialog
+  class="letter-rules-modal"
+  id="letterRulesModal"
+  aria-labelledby="letterRulesModalTitle"
+>
+  <div class="letter-rules-modal__inner">
+    <div class="letter-rules-modal__header">
+      <div>
+        <p class="letter-rules-modal__eyebrow">LETTER GUIDELINES</p>
+        <h2 id="letterRulesModalTitle">お手紙に関する注意事項</h2>
+      </div>
+
+      <button
+        class="modal-close"
+        id="closeLetterRulesButton"
+        type="button"
+        aria-label="注意事項を閉じる"
+      >
+        ×
+      </button>
+    </div>
+
+    <div
+      class="letter-rules-modal__content"
+      id="letterRulesModalContent"
+    >
+      <p class="letter-rules-modal__loading">
+        注意事項を読み込んでいます。
+      </p>
+    </div>
+  </div>
+</dialog>
 </body>
 </html>
