@@ -1153,6 +1153,10 @@ textarea[aria-invalid="true"] {
     gap: 8px;
   }
 }
+.submission-layout--single {
+  grid-template-columns: minmax(0, 860px);
+  justify-content: center;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html {
