@@ -3,7 +3,7 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw2DiBXqnVAs8qQOyzOl14QYcz2k6_LmIZfy64N6n8Pj_PdWfCwaHyMeRYK48W88TQzbA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbykMm6HI2JpyznxaMLt7eIpavoSz42O9YN3wrfn08FqAXZbY6glsU_Q_Bj0vnCqhelHNQ/exec";
 
 const draftStorage = {
   get() {
@@ -31,7 +31,9 @@ const draftStorage = {
     }
   }
 };
+const turnstileError = document.getElementById("turnstileError");
 
+let turnstileToken = "";
 const form = document.getElementById("submissionForm");
 const senderNameInput = document.getElementById("senderName");
 const titleInput = document.getElementById("title");
@@ -76,13 +78,37 @@ let hasAttemptedSubmit = false;
 let ngWordsStatus = "loading";
 let normalizedNgWords = [];
 
+
+function handleTurnstileSuccess(token) {
+  turnstileToken = token;
+  turnstileError.textContent = "";
+  updateValidationState();
+}
+
+function handleTurnstileExpired() {
+  turnstileToken = "";
+  turnstileError.textContent =
+    "確認の有効期限が切れました。もう一度確認してください。";
+  updateValidationState();
+}
+
+function handleTurnstileError() {
+  turnstileToken = "";
+  turnstileError.textContent =
+    "確認処理に失敗しました。もう一度お試しください。";
+  updateValidationState();
+}
+
+
 function getFormData() {
   return {
     senderName: senderNameInput.value.trim(),
     title: titleInput.value.trim(),
     body: bodyInput.value.trim(),
     messageToManager: messageToManagerInput.value.trim(),
-    agreement: agreementInput.checked
+    agreement: agreementInput.checked,
+    turnstileToken
+
   };
 }
 
@@ -138,7 +164,11 @@ function getValidationState() {
   return {
     baseErrors,
     ngWordErrors,
-    isValid: ngWordsStatus === "ready" && !hasBaseError && !hasNgWordError
+    isValid:
+      ngWordsStatus === "ready" &&
+      !hasBaseError &&
+      !hasNgWordError &&
+      Boolean(turnstileToken)
   };
 }
 
