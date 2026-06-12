@@ -73,6 +73,7 @@
         <span class="scroll-guide__line"></span>
       </a>
     </section>
+    <div class="submission-section-stack">
     <section class="section section--submission" id="letterForm">
       <div class="submission-layout submission-layout--single">
         <div class="letter-panel reveal">
@@ -220,7 +221,7 @@
       </div>
     </section>
 
-    <section class="section section--faq reveal" aria-labelledby="faqTitle">
+    <section class="section section--faq" aria-labelledby="faqTitle">
       <details class="faq-section">
         <summary class="faq-section-summary">
           <span id="faqTitle">よくあるご質問</span>
@@ -238,24 +239,31 @@
       </details>
     </section>
 
-    <section class="section section--trust reveal" aria-labelledby="contactTitle">
-      <div class="trust-panel">
-        <p class="section-heading__en">CONTACT</p>
-        <h2 id="contactTitle">お問い合わせ</h2>
-        <p>
-          投函フォームの不具合や、お手紙の掲載状況に関するお問い合わせは、駅長までDMにてご連絡ください。
-        </p>
+    <section class="section section--trust" aria-labelledby="contactTitle">
+      <details class="contact-section trust-panel">
+        <summary class="contact-section-summary">
+          <span id="contactTitle">お問い合わせ</span>
+        </summary>
 
-        <a
-          class="button button--primary"
-          href="https://x.com/hyohakupost"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Xで問い合わせる
-        </a>
-      </div>
+        <div class="contact-section-content">
+          <p class="section-heading__en">CONTACT</p>
+          <h2>お問い合わせ</h2>
+          <p>
+            投函フォームの不具合や、お手紙の掲載状況に関するお問い合わせは、駅長までDMにてご連絡ください。
+          </p>
+
+          <a
+            class="button button--primary"
+            href="https://x.com/hyohakupost"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Xで問い合わせる
+          </a>
+        </div>
+      </details>
     </section>
+    </div>
   </main>
 
   <footer class="site-footer">
