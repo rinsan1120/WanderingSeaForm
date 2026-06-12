@@ -493,6 +493,10 @@ a {
   font-size: 1.4rem;
 }
 
+.section--submission {
+  padding-top: 70px;
+}
+
 .privacy-note p {
   margin: 0;
   font-size: 0.88rem;
