@@ -3,6 +3,7 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxjLDB_YqP9I2twD68XG2Ijb0KMUXRkM1DzZnrS8G6mslyGdzKosQgDw-oBFS7v8RY3/exec";
 
 const draftStorage = {
   get() {
@@ -337,7 +338,29 @@ async function runMockSubmission() {
   isSubmitting = false;
   submitLetterButton.disabled = false;
 }
+async function sendLetterToGas() {
+  const data = getFormData();
 
+  const response = await fetch(GAS_WEB_APP_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(data)
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTPエラー: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error("GASへの保存に失敗しました。");
+  }
+
+  return result;
+}
 function closeSubmissionScene() {
   submissionScene.classList.remove("is-active", "is-sending");
   submissionScene.setAttribute("aria-hidden", "true");
@@ -379,7 +402,26 @@ form.addEventListener("submit", (event) => {
 clearDraftButton.addEventListener("click", () => clearDraft());
 closePreviewButton.addEventListener("click", closePreview);
 editButton.addEventListener("click", closePreview);
-submitLetterButton.addEventListener("click", runMockSubmission);
+submitLetterButton.addEventListener("click", async () => {
+  if (isSubmitting) return;
+
+  submitLetterButton.disabled = true;
+
+  try {
+    await sendLetterToGas();
+
+    // スプレッドシートへの保存成功後に投函演出を開始
+    await runMockSubmission();
+  } catch (error) {
+    console.error("投函に失敗しました。", error);
+
+    window.alert(
+      "投函に失敗しました。入力内容は保持されています。時間をおいて再度お試しください。"
+    );
+
+    submitLetterButton.disabled = false;
+  }
+});
 writeAnotherButton.addEventListener("click", closeSubmissionScene);
 
 previewModal.addEventListener("click", (event) => {
