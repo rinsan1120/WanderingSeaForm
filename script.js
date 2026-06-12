@@ -71,14 +71,77 @@ const submissionSceneStatus = document.getElementById("submissionSceneStatus");
 const submissionResult = document.getElementById("submissionResult");
 const writeAnotherButton = document.getElementById("writeAnotherButton");
 const siteHeader = document.querySelector(".site-header");
+const openLetterRulesButton =
+  document.getElementById("openLetterRulesButton");
 
+const closeLetterRulesButton =
+  document.getElementById("closeLetterRulesButton");
+
+const letterRulesModal =
+  document.getElementById("letterRulesModal");
+
+const letterRulesModalContent =
+  document.getElementById("letterRulesModalContent");
+
+const LETTER_RULES_URL = "content/letter-guidelines.html";
+
+let letterRulesLoaded = false;
 let saveTimer = null;
 let isSubmitting = false;
 let hasAttemptedSubmit = false;
 let ngWordsStatus = "loading";
 let normalizedNgWords = [];
 
+async function openLetterRulesModal() {
+  letterRulesModal.showModal();
 
+  requestAnimationFrame(() => {
+    letterRulesModal.classList.add("is-visible");
+  });
+
+  if (letterRulesLoaded) {
+    return;
+  }
+
+  letterRulesModalContent.innerHTML =
+    '<p class="letter-rules-modal__loading">注意事項を読み込んでいます。</p>';
+
+  try {
+    const response = await fetch(LETTER_RULES_URL, {
+      cache: "no-cache"
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    letterRulesModalContent.innerHTML =
+      await response.text();
+
+    letterRulesLoaded = true;
+  } catch (error) {
+    console.error(
+      "お手紙に関する注意事項の読み込みに失敗しました。",
+      error
+    );
+
+    letterRulesModalContent.innerHTML = `
+      <p class="letter-rules-modal__error">
+        注意事項を読み込めませんでした。時間をおいて再度お試しください。
+      </p>
+    `;
+  }
+}
+
+function closeLetterRulesModal() {
+  letterRulesModal.classList.remove("is-visible");
+
+  window.setTimeout(() => {
+    if (letterRulesModal.open) {
+      letterRulesModal.close();
+    }
+  }, 280);
+}
 function handleTurnstileSuccess(token) {
   turnstileToken = token;
   turnstileError.textContent = "";
@@ -455,7 +518,28 @@ submitLetterButton.addEventListener("click", async () => {
   }
 });
 writeAnotherButton.addEventListener("click", closeSubmissionScene);
+/* ここから追加 */
+openLetterRulesButton.addEventListener(
+  "click",
+  openLetterRulesModal
+);
 
+closeLetterRulesButton.addEventListener(
+  "click",
+  closeLetterRulesModal
+);
+
+letterRulesModal.addEventListener("click", (event) => {
+  if (event.target === letterRulesModal) {
+    closeLetterRulesModal();
+  }
+});
+
+letterRulesModal.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeLetterRulesModal();
+});
+/* ここまで追加 */
 previewModal.addEventListener("click", (event) => {
   if (event.target === previewModal) closePreview();
 });

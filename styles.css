@@ -995,6 +995,125 @@ textarea[aria-invalid="true"] {
 .submission-scene.is-sending .envelope {
   animation: envelopeSail 2.2s ease-in-out forwards;
 }
+.field-label-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.field-label-row label {
+  margin-bottom: 0;
+}
+
+.field-help-button {
+  padding: 4px 11px;
+  color: var(--accent-strong);
+  background: rgba(96, 165, 250, 0.07);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.field-help-button:hover,
+.field-help-button:focus-visible {
+  background: rgba(96, 165, 250, 0.14);
+  border-color: var(--accent-color);
+}
+
+.letter-rules-modal {
+  width: min(760px, calc(100% - 30px));
+  max-height: 82svh;
+  padding: 0;
+  color: var(--text-main);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(17, 28, 49, 0.99),
+      rgba(8, 15, 29, 0.99)
+    );
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: scale(0.95) translateY(12px);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.letter-rules-modal.is-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.letter-rules-modal::backdrop {
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+.letter-rules-modal__inner {
+  max-height: 82svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.letter-rules-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 26px 28px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.letter-rules-modal__header h2 {
+  margin: 0;
+  font-family: "Noto Serif JP", serif;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  font-weight: 500;
+}
+
+.letter-rules-modal__eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent-color);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+}
+
+.letter-rules-modal__content {
+  padding: 26px 28px 34px;
+  overflow-y: auto;
+  color: var(--text-sub);
+}
+
+.letter-guidelines > p {
+  margin: 0 0 20px;
+}
+
+.letter-guidelines ul {
+  margin: 0 0 24px;
+  padding-left: 1.5em;
+}
+
+.letter-guidelines li + li {
+  margin-top: 10px;
+}
+
+.letter-rules-modal__loading,
+.letter-rules-modal__error {
+  margin: 0;
+  text-align: center;
+}
+
+.letter-rules-modal__error {
+  color: var(--error);
+}
 
 @keyframes envelopeSail {
   0% { transform: translateY(0) rotate(-4deg) scale(1); opacity: 1; }
@@ -1246,5 +1365,26 @@ textarea[aria-invalid="true"] {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+}
+@media (max-width: 620px) {
+  .field-label-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .letter-rules-modal {
+    width: calc(100% - 22px);
+    max-height: 88svh;
+  }
+
+  .letter-rules-modal__inner {
+    max-height: 88svh;
+  }
+
+  .letter-rules-modal__header,
+  .letter-rules-modal__content {
+    padding-inline: 18px;
   }
 }
