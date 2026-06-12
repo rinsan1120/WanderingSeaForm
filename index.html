@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VRChatワールド『漂泊ノ海』へ、言葉にならなかった想いを手紙として投函するためのフォームです。">
+  <meta name="theme-color" content="#08101f">
+
+  <title>手紙を投函する｜漂泊ノ海</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <a class="skip-link" href="#letterForm">手紙を書く場所へ移動</a>
+
+  <header class="site-header" id="top">
+    <div class="header-inner">
+      <a class="site-logo" href="#top" aria-label="漂泊ノ海 手紙の投函 トップへ">
+        <span class="site-logo__main">漂泊ノ海</span>
+        <span class="site-logo__sub">HYŌHAKU NO UMI</span>
+      </a>
+
+      <a class="header-link" href="#aboutSubmission">投函について</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="star-field" aria-hidden="true"></div>
+      <div class="moon" aria-hidden="true"></div>
+
+      <div class="floating-letter floating-letter--one" aria-hidden="true">
+        <span></span>
+      </div>
+      <div class="floating-letter floating-letter--two" aria-hidden="true">
+        <span></span>
+      </div>
+      <div class="floating-letter floating-letter--three" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <div class="hero__content">
+        <p class="eyebrow">LETTER SUBMISSION</p>
+        <h1 id="heroTitle">手紙を、海へ。</h1>
+        <p class="hero__copy">
+          言えなかったこと。届かなかった言葉。<br>
+          行き先のない想いを、ひとつの手紙にして流してみませんか。
+        </p>
+        <a class="button button--ghost" href="#letterForm">手紙を書く</a>
+      </div>
+
+      <div class="sea" aria-hidden="true">
+        <div class="sea__wave sea__wave--back"></div>
+        <div class="sea__wave sea__wave--front"></div>
+      </div>
+
+      <a class="scroll-guide" href="#letterForm" aria-label="手紙を書く場所へ移動">
+        <span>SCROLL</span>
+        <span class="scroll-guide__line"></span>
+      </a>
+    </section>
+
+    <section class="section section--form" id="letterForm" aria-labelledby="formTitle">
+      <div class="section-heading reveal">
+        <p class="section-heading__en">WRITE A LETTER</p>
+        <h2 id="formTitle">あなたの手紙</h2>
+        <p class="section-heading__description">
+          入力内容は途中でこの端末に一時保存されます。送信前に、確認画面で全文を見直せます。
+        </p>
+      </div>
+
+      <div class="submission-layout">
+        <aside class="submission-guide reveal" id="aboutSubmission">
+          <p class="submission-guide__label">BEFORE WRITING</p>
+          <h3>この海に流れる手紙について</h3>
+          <p>
+            お預かりした手紙は、内容を確認したうえでVRChatワールド「漂泊ノ海」に掲載される場合があります。
+          </p>
+
+          <dl class="submission-facts">
+            <div>
+              <dt>これまでの投函</dt>
+              <dd>約3,000通</dd>
+            </div>
+            <div>
+              <dt>入力する情報</dt>
+              <dd>差出人・標題・本文のみ</dd>
+            </div>
+            <div>
+              <dt>掲載</dt>
+              <dd>審査後、一部を掲載</dd>
+            </div>
+          </dl>
+
+          <div class="privacy-note">
+            <span aria-hidden="true">☾</span>
+            <p>
+              本名、住所、連絡先など、個人を特定できる情報は書かないでください。
+            </p>
+          </div>
+        </aside>
+
+        <div class="letter-panel reveal">
+          <div class="letter-panel__header">
+            <div>
+              <p>漂泊ノ海　投函便箋</p>
+              <span>誰にも言えなかった言葉のために</span>
+            </div>
+            <p class="draft-status" id="draftStatus" role="status" aria-live="polite">下書き未保存</p>
+          </div>
+
+          <form id="submissionForm" novalidate>
+            <div class="field-row">
+              <div class="form-field">
+                <label for="senderName">
+                  差出人
+                  <span class="field-optional">任意</span>
+                </label>
+                <input
+                  id="senderName"
+                  name="senderName"
+                  type="text"
+                  maxlength="20"
+                  autocomplete="off"
+                  placeholder="匿名、旅人、かつての私 など"
+                >
+                <div class="field-meta">
+                  <p class="field-error" id="senderNameError"></p>
+                  <p><span id="senderNameCount">0</span> / 20</p>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="title">
+                  標題
+                  <span class="field-required">必須</span>
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  maxlength="40"
+                  autocomplete="off"
+                  placeholder="この手紙に、名前をつけるなら"
+                  required
+                >
+                <div class="field-meta">
+                  <p class="field-error" id="titleError"></p>
+                  <p><span id="titleCount">0</span> / 40</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-field form-field--body">
+              <label for="body">
+                本文
+                <span class="field-required">必須</span>
+              </label>
+              <textarea
+                id="body"
+                name="body"
+                rows="14"
+                maxlength="1200"
+                placeholder="海へ流したい言葉を、ここに。"
+                required
+              ></textarea>
+              <div class="field-meta">
+                <p class="field-error" id="bodyError"></p>
+                <p><span id="bodyCount">0</span> / 1200</p>
+              </div>
+            </div>
+
+            <div class="rules-box">
+              <label class="check-field">
+                <input id="agreement" name="agreement" type="checkbox" required>
+                <span>
+                  手紙が審査後に「漂泊ノ海」へ掲載される可能性があること、個人情報を書かないことに同意します。
+                </span>
+              </label>
+              <p class="field-error" id="agreementError"></p>
+            </div>
+
+            <div class="turnstile-sample" aria-label="Cloudflare Turnstile設置予定領域">
+              <div class="turnstile-sample__check" aria-hidden="true">✓</div>
+              <div>
+                <p>あなたが人であることを確認</p>
+                <span>本番ではここに Cloudflare Turnstile を設置</span>
+              </div>
+              <strong>TURNSTILE</strong>
+            </div>
+
+            <p class="sample-notice">
+              このサンプルは画面動作のみです。投函ボタンを押しても、現在はスプレッドシートへ送信されません。
+            </p>
+
+            <div class="form-actions">
+              <button class="button button--ghost" id="clearDraftButton" type="button">下書きを消す</button>
+              <button class="button button--primary" type="submit">投函前に確認する</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--trust reveal" aria-labelledby="trustTitle">
+      <div class="trust-panel">
+        <p class="section-heading__en">A QUIET PROMISE</p>
+        <h2 id="trustTitle">手紙を預かるということ。</h2>
+        <p>
+          「漂泊ノ海」は、これまで約3,000通の手紙をお預かりしてきました。<br>
+          入力された内容は掲載審査のためにのみ扱い、世界観の一部として大切に保管します。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a href="#top">漂泊ノ海</a>
+    <p>© 2026 漂泊ノ海</p>
+  </footer>
+
+  <dialog class="preview-modal" id="previewModal" aria-labelledby="previewTitle">
+    <div class="preview-modal__inner">
+      <div class="preview-modal__header">
+        <div>
+          <p class="preview-modal__eyebrow">FINAL REVIEW</p>
+          <h2 id="previewTitle">この手紙を、海へ流しますか？</h2>
+        </div>
+        <button class="modal-close" id="closePreviewButton" type="button" aria-label="確認画面を閉じる">×</button>
+      </div>
+
+      <article class="letter-preview">
+        <p class="letter-preview__to">漂泊ノ海へ</p>
+        <h3 id="previewLetterTitle"></h3>
+        <p class="letter-preview__body" id="previewLetterBody"></p>
+        <p class="letter-preview__sender" id="previewLetterSender"></p>
+      </article>
+
+      <div class="preview-modal__actions">
+        <button class="button button--ghost" id="editButton" type="button">書き直す</button>
+        <button class="button button--primary" id="submitLetterButton" type="button">この内容で海へ流す</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="submission-scene" id="submissionScene" aria-hidden="true">
+    <div class="submission-scene__stars"></div>
+    <div class="submission-scene__content">
+      <div class="envelope" aria-hidden="true">
+        <span class="envelope__flap"></span>
+      </div>
+      <p class="submission-scene__status" id="submissionSceneStatus">手紙を海へ運んでいます……</p>
+      <div class="submission-scene__result" id="submissionResult" hidden>
+        <p class="submission-scene__eyebrow">LETTER RECEIVED</p>
+        <h2>あなたの手紙は、海へ流されました。</h2>
+        <p>いつか、どこかで。誰かのもとへ届くかもしれません。</p>
+        <button class="button button--ghost" id="writeAnotherButton" type="button">もう一通、手紙を書く</button>
+      </div>
+    </div>
+    <div class="submission-sea" aria-hidden="true"></div>
+  </div>
+</body>
+</html>
