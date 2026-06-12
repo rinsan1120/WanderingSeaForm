@@ -952,6 +952,25 @@ textarea[aria-invalid="true"] {
   margin-top: 1em;
 }
 
+.faq-answer-content a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: rgba(191, 219, 254, 0.55);
+  text-underline-offset: 0.18em;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.faq-answer-content a:hover {
+  color: var(--text-main);
+  text-decoration-color: currentColor;
+}
+
+.faq-answer-content a:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 .section--trust {
   padding: 0;
 }

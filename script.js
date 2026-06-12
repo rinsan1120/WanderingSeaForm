@@ -148,6 +148,43 @@ function createFaqBadge(label) {
   return badge;
 }
 
+function getSafeFaqUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function appendFaqAnswerContent(element, content) {
+  const linkPattern = /\[([^\]\r\n]+)\]\(([^)\r\n]+)\)/g;
+  let lastIndex = 0;
+
+  for (const match of content.matchAll(linkPattern)) {
+    element.append(document.createTextNode(content.slice(lastIndex, match.index)));
+
+    const linkText = match[1].trim();
+    const safeUrl = getSafeFaqUrl(match[2].trim());
+    if (linkText && safeUrl) {
+      const link = document.createElement("a");
+      link.href = safeUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = linkText;
+      element.append(link);
+    } else {
+      element.append(document.createTextNode(match[0]));
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  element.append(document.createTextNode(content.slice(lastIndex)));
+}
+
 function renderFaqItems(faqItems) {
   faqList.replaceChildren();
 
@@ -176,7 +213,7 @@ function renderFaqItems(faqItems) {
     answerContent.className = "faq-answer-content";
     answer.split(/\n\s*\n/).forEach((paragraph) => {
       const paragraphElement = document.createElement("p");
-      paragraphElement.textContent = paragraph;
+      appendFaqAnswerContent(paragraphElement, paragraph);
       answerContent.append(paragraphElement);
     });
     answerWrapper.append(answerContent);
