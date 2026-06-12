@@ -1013,9 +1013,9 @@ textarea[aria-invalid="true"] {
   justify-content: center;
   padding: 5px 12px;
 
-  color: #fde68a;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(251, 191, 36, 0.48);
+  color: #f7a9d8;
+  background: rgba(43, 1, 35, 0.12);
+  border: 1px solid rgba(234, 109, 209, 0.48);
   border-radius: 999px;
 
   font-size: 0.72rem;
