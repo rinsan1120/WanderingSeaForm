@@ -35,6 +35,7 @@ const form = document.getElementById("submissionForm");
 const senderNameInput = document.getElementById("senderName");
 const titleInput = document.getElementById("title");
 const bodyInput = document.getElementById("body");
+const messageToManagerInput = document.getElementById("messageToManager");
 const agreementInput = document.getElementById("agreement");
 const clearDraftButton = document.getElementById("clearDraftButton");
 const confirmSubmissionButton = document.getElementById("confirmSubmissionButton");
@@ -44,10 +45,12 @@ const ngWordsLoadError = document.getElementById("ngWordsLoadError");
 const senderNameCount = document.getElementById("senderNameCount");
 const titleCount = document.getElementById("titleCount");
 const bodyCount = document.getElementById("bodyCount");
+const messageToManagerCount = document.getElementById("messageToManagerCount");
 
 const senderNameError = document.getElementById("senderNameError");
 const titleError = document.getElementById("titleError");
 const bodyError = document.getElementById("bodyError");
+const messageToManagerError = document.getElementById("messageToManagerError");
 const agreementError = document.getElementById("agreementError");
 
 const previewModal = document.getElementById("previewModal");
@@ -57,6 +60,8 @@ const submitLetterButton = document.getElementById("submitLetterButton");
 const previewLetterTitle = document.getElementById("previewLetterTitle");
 const previewLetterBody = document.getElementById("previewLetterBody");
 const previewLetterSender = document.getElementById("previewLetterSender");
+const previewMessageToManagerWrapper = document.getElementById("previewMessageToManagerWrapper");
+const previewMessageToManager = document.getElementById("previewMessageToManager");
 
 const submissionScene = document.getElementById("submissionScene");
 const submissionSceneStatus = document.getElementById("submissionSceneStatus");
@@ -75,6 +80,7 @@ function getFormData() {
     senderName: senderNameInput.value.trim(),
     title: titleInput.value.trim(),
     body: bodyInput.value.trim(),
+    messageToManager: messageToManagerInput.value.trim(),
     agreement: agreementInput.checked
   };
 }
@@ -83,6 +89,7 @@ function updateCharacterCounts() {
   senderNameCount.textContent = String(senderNameInput.value.length);
   titleCount.textContent = String(titleInput.value.length);
   bodyCount.textContent = String(bodyInput.value.length);
+  messageToManagerCount.textContent = String(messageToManagerInput.value.length);
 }
 
 function setFieldError(input, errorElement, message) {
@@ -113,12 +120,16 @@ function getValidationState() {
       : data.body.length < 10
         ? "本文は10文字以上で入力してください。"
         : "",
+    messageToManager: data.messageToManager.length > 500
+      ? "駅長へのご要望・ご連絡事項は500文字以内で入力してください。"
+      : "",
     agreement: data.agreement ? "" : "内容を確認し、同意欄にチェックを入れてください。"
   };
   const ngWordErrors = {
     senderName: containsNgWord(senderNameInput.value),
     title: containsNgWord(titleInput.value),
-    body: containsNgWord(bodyInput.value)
+    body: containsNgWord(bodyInput.value),
+    messageToManager: containsNgWord(messageToManagerInput.value)
   };
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
@@ -151,6 +162,13 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
       : (hasAttemptedSubmit || bodyInput.value.length > 0)
         ? baseErrors.body
         : ""
+  );
+  setFieldError(
+    messageToManagerInput,
+    messageToManagerError,
+    ngWordErrors.messageToManager
+      ? NG_WORD_ERROR_MESSAGE
+      : baseErrors.messageToManager
   );
   agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
   agreementInput.setAttribute("aria-invalid", showBaseErrors && baseErrors.agreement ? "true" : "false");
@@ -205,7 +223,7 @@ async function loadNgWords() {
 
 function saveDraft() {
   const data = getFormData();
-  const hasDraft = data.senderName || data.title || data.body || data.agreement;
+  const hasDraft = data.senderName || data.title || data.body || data.messageToManager || data.agreement;
 
   if (!hasDraft) {
     draftStorage.remove();
@@ -235,6 +253,7 @@ function restoreDraft() {
     senderNameInput.value = data.senderName ?? "";
     titleInput.value = data.title ?? "";
     bodyInput.value = data.body ?? "";
+    messageToManagerInput.value = data.messageToManager ?? "";
     agreementInput.checked = Boolean(data.agreement);
     draftStatus.textContent = "保存されていた下書きを復元しました";
   } catch (error) {
@@ -248,7 +267,12 @@ function restoreDraft() {
 }
 
 function clearDraft({ askConfirmation = true } = {}) {
-  const hasContent = senderNameInput.value || titleInput.value || bodyInput.value || agreementInput.checked;
+  const hasContent =
+    senderNameInput.value ||
+    titleInput.value ||
+    bodyInput.value ||
+    messageToManagerInput.value ||
+    agreementInput.checked;
 
   if (askConfirmation && hasContent) {
     const shouldClear = window.confirm("この端末に保存された下書きと入力内容を消しますか？");
@@ -269,6 +293,8 @@ function openPreview() {
   previewLetterTitle.textContent = data.title;
   previewLetterBody.textContent = data.body;
   previewLetterSender.textContent = data.senderName ? `差出人　${data.senderName}` : "差出人　名もなき旅人";
+  previewMessageToManagerWrapper.hidden = !data.messageToManager;
+  previewMessageToManager.textContent = data.messageToManager;
 
   previewModal.showModal();
   document.body.classList.add("modal-open");
@@ -328,7 +354,8 @@ function closeSubmissionScene() {
 [
   senderNameInput,
   titleInput,
-  bodyInput
+  bodyInput,
+  messageToManagerInput
 ].forEach((input) => {
   input.addEventListener("input", () => {
     updateCharacterCounts();
@@ -385,5 +412,5 @@ document.querySelectorAll(".reveal").forEach((element) => {
 
 restoreDraft();
 
-// ブラウザ側の判定は即時フィードバック用。GAS連携時は同じ条件をサーバー側でも必ず検証する。
+// ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();

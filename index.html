@@ -151,6 +151,24 @@
               </div>
             </div>
 
+            <div class="form-field form-field--manager-message">
+              <label for="messageToManager">
+                駅長へのご要望、ご連絡事項等
+                <span class="field-optional">任意</span>
+              </label>
+              <textarea
+                id="messageToManager"
+                name="messageToManager"
+                rows="3"
+                maxlength="500"
+                placeholder="ワールドへのご要望や、駅長へのご連絡事項があればご記入ください。"
+              ></textarea>
+              <div class="field-meta">
+                <p class="field-error" id="messageToManagerError"></p>
+                <p><span id="messageToManagerCount">0</span> / 500</p>
+              </div>
+            </div>
+
             <div class="rules-box">
               <label class="check-field">
                 <input id="agreement" name="agreement" type="checkbox" required>
@@ -223,6 +241,10 @@
         <h3 id="previewLetterTitle"></h3>
         <p class="letter-preview__body" id="previewLetterBody"></p>
         <p class="letter-preview__sender" id="previewLetterSender"></p>
+        <div class="letter-preview__manager-message" id="previewMessageToManagerWrapper" hidden>
+          <p class="letter-preview__manager-label">駅長へのご要望・ご連絡事項</p>
+          <p id="previewMessageToManager"></p>
+        </div>
       </article>
 
       <div class="preview-modal__actions">
