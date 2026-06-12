@@ -5,6 +5,11 @@ const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXF5NHG1mrkaOJBqbXRmlotvcX9If5d_lqa2xnDSSzA3LzJF4rishV5KLZmndcasquQg/exec";
 const FAQ_CONTENT_URL = "content/faq.txt";
+const PUBLICATION_STATUS_API_URL =
+  "https://script.google.com/macros/s/AKfycbxKP3hYT3CVaqZRCS8b8qvOK_41JCf5ADt9xr-I7TICG0t4YdlmFNtTXxXfKSI4CqqAtQ/exec";
+const PUBLICATION_STATUS_CALLBACK_NAME =
+  "handlePublicationStatusResponse";
+const PUBLICATION_STATUS_TIMEOUT_MS = 10000;
 
 const draftStorage = {
   get() {
@@ -74,6 +79,8 @@ const writeAnotherButton = document.getElementById("writeAnotherButton");
 const siteHeader = document.querySelector(".site-header");
 const faqList = document.getElementById("faqList");
 const faqStatus = document.getElementById("faqStatus");
+const publicationStatusText =
+  document.getElementById("publicationStatusText");
 const openLetterRulesButton =
   document.getElementById("openLetterRulesButton");
 
@@ -94,6 +101,105 @@ let isSubmitting = false;
 let hasAttemptedSubmit = false;
 let ngWordsStatus = "loading";
 let normalizedNgWords = [];
+let publicationStatusScript = null;
+let publicationStatusTimer = null;
+let publicationStatusSettled = false;
+
+function cleanupPublicationStatusRequest() {
+  window.clearTimeout(publicationStatusTimer);
+  publicationStatusTimer = null;
+
+  publicationStatusScript?.remove();
+  publicationStatusScript = null;
+}
+
+function showPublicationStatusError() {
+  if (publicationStatusSettled) return;
+
+  publicationStatusSettled = true;
+  cleanupPublicationStatusRequest();
+
+  if (publicationStatusText) {
+    publicationStatusText.textContent =
+      "掲載状況を取得できませんでした";
+  }
+}
+
+function formatPublicationStatusDate(value) {
+  if (typeof value !== "string") return null;
+
+  const match =
+    /^(\d{4})\/(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01]) ([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
+  if (!match) return null;
+
+  const [, yearText, monthText, dayText, hour, minute] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${year}年${month}月${day}日 ${hour}:${minute}`;
+}
+
+function handlePublicationStatusResponse(data) {
+  if (publicationStatusSettled) return;
+
+  const formattedDate =
+    formatPublicationStatusDate(data?.last_updated);
+  if (!formattedDate) {
+    showPublicationStatusError();
+    return;
+  }
+
+  publicationStatusSettled = true;
+  cleanupPublicationStatusRequest();
+
+  if (publicationStatusText) {
+    publicationStatusText.textContent =
+      `掲載状況：${formattedDate}頃までに投函されたお手紙を掲載しています。`;
+  }
+}
+
+window[PUBLICATION_STATUS_CALLBACK_NAME] =
+  handlePublicationStatusResponse;
+
+function loadPublicationStatus() {
+  if (!publicationStatusText) return;
+
+  try {
+    const url = new URL(PUBLICATION_STATUS_API_URL);
+    url.searchParams.set(
+      "callback",
+      PUBLICATION_STATUS_CALLBACK_NAME
+    );
+    url.searchParams.set("_", String(Date.now()));
+
+    publicationStatusScript = document.createElement("script");
+    publicationStatusScript.src = url.href;
+    publicationStatusScript.async = true;
+    publicationStatusScript.addEventListener(
+      "error",
+      showPublicationStatusError,
+      { once: true }
+    );
+
+    publicationStatusTimer = window.setTimeout(
+      showPublicationStatusError,
+      PUBLICATION_STATUS_TIMEOUT_MS
+    );
+    document.head.append(publicationStatusScript);
+  } catch {
+    showPublicationStatusError();
+  }
+}
 
 function parseFaqContent(content) {
   const faqItems = [];
@@ -729,3 +835,4 @@ restoreDraft();
 // ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();
 loadFaqContent();
+loadPublicationStatus();

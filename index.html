@@ -64,6 +64,16 @@
         <p class="hero__copy">
           いつかの、どこかの空の下の誰かへ、想いを綴ってみませんか？ 
         </p>
+        <div
+          class="publication-status"
+          id="publicationStatus"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="publication-status__text" id="publicationStatusText">
+            掲載状況を確認しています……
+          </span>
+        </div>
         <a class="button button--ghost" href="#letterForm">手紙を書く</a>
       </div>
 
@@ -118,7 +128,7 @@
 
               <div class="form-field">
                 <label for="title">
-                  お手紙のタイトル
+                  タイトル
                   <span class="field-required">必須</span>
                 </label>
                 <input
