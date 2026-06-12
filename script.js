@@ -3,7 +3,7 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbykMm6HI2JpyznxaMLt7eIpavoSz42O9YN3wrfn08FqAXZbY6glsU_Q_Bj0vnCqhelHNQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXF5NHG1mrkaOJBqbXRmlotvcX9If5d_lqa2xnDSSzA3LzJF4rishV5KLZmndcasquQg/exec";
 
 const draftStorage = {
   get() {
@@ -98,7 +98,9 @@ function handleTurnstileError() {
     "確認処理に失敗しました。もう一度お試しください。";
   updateValidationState();
 }
-
+window.handleTurnstileSuccess = handleTurnstileSuccess;
+window.handleTurnstileExpired = handleTurnstileExpired;
+window.handleTurnstileError = handleTurnstileError;
 
 function getFormData() {
   return {
