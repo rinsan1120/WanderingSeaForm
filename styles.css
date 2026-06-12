@@ -414,7 +414,7 @@ a {
 .trust-panel h2 {
   margin: 0;
   font-family: "Noto Serif JP", serif;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 500;
   letter-spacing: 0.1em;
 }
