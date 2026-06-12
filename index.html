@@ -52,7 +52,7 @@
       >
       <div class="hero__content">
         <p class="eyebrow">LETTER SUBMISSION</p>
-        <h2 id="heroTitle">漂泊ノ海お手紙投函フォーム</h2>
+        <h2 id="heroTitle">漂泊ノ海お手紙投函ポスト</h2>
         <p class="hero__copy">
           いつかの、どこかの空の下の誰かへ、想いを綴ってみませんか？ 
         </p>
@@ -74,7 +74,7 @@
         <div class="letter-panel reveal">
           <div class="letter-panel__header">
             <div>
-              <p>便箋</p>
+              <p>投函フォーム</p>
               <span class="field-note">以下のフォームにお手紙をご記入ください。</span>
               <span class="field-note">投函した端末のIPアドレス等、個人情報の収集は一切いたしません。</span>
             </div>
@@ -141,13 +141,13 @@
                 id="body"
                 name="body"
                 rows="14"
-                maxlength="2000"
+                maxlength="4000"
                 placeholder="お手紙の本文"
                 required
               ></textarea>
               <div class="field-meta">
                 <p class="field-error" id="bodyError"></p>
-                <p><span id="bodyCount">0</span> / 2000</p>
+                <p><span id="bodyCount">0</span> / 4000</p>
               </div>
             </div>
 
@@ -214,7 +214,7 @@
       <div class="preview-modal__header">
         <div>
           <p class="preview-modal__eyebrow">FINAL REVIEW</p>
-          <h2 id="previewTitle">この手紙を、海へ流しますか？</h2>
+          <h2 id="previewTitle">この手紙を漂泊ノ海へ流しますか？</h2>
         </div>
         <button class="modal-close" id="closePreviewButton" type="button" aria-label="確認画面を閉じる">×</button>
       </div>
@@ -241,7 +241,7 @@
       <p class="submission-scene__status" id="submissionSceneStatus">手紙を海へ運んでいます……</p>
       <div class="submission-scene__result" id="submissionResult" hidden>
         <p class="submission-scene__eyebrow">LETTER RECEIVED</p>
-        <h2>あなたの手紙は、海へ流されました。</h2>
+        <h2>投函完了</h2>
         <p>いつかの、どこかの空の下の誰かへ</p>
         <button class="button button--ghost" id="writeAnotherButton" type="button">もう一通、手紙を書く</button>
       </div>
