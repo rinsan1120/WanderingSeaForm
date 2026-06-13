@@ -10,6 +10,12 @@ const PUBLICATION_STATUS_API_URL =
 const PUBLICATION_STATUS_CALLBACK_NAME =
   "handlePublicationStatusResponse";
 const PUBLICATION_STATUS_TIMEOUT_MS = 10000;
+const LETTER_SEARCH_API_URL =
+  "https://script.google.com/macros/s/AKfycbxkSc8MyUuOV_kRmEEx_xThmehCWpShYOpqnP4fbLdjVpwx5njr5A3lneQlS__bD-Wurg/exec";
+const LETTER_SEARCH_TIMEOUT_MS = 15000;
+const LETTER_SEARCH_ERROR_MESSAGE =
+  "お手紙の検索に失敗しました。時間をおいて再度お試しください。";
+const COPY_FEEDBACK_DURATION_MS = 2000;
 
 const draftStorage = {
   get() {
@@ -81,6 +87,23 @@ const faqList = document.getElementById("faqList");
 const faqStatus = document.getElementById("faqStatus");
 const publicationStatusText =
   document.getElementById("publicationStatusText");
+const letterSearchForm = document.getElementById("letterSearchForm");
+const letterSearchNameInput =
+  document.getElementById("letterSearchName");
+const letterSearchTitleInput =
+  document.getElementById("letterSearchTitleInput");
+const letterSearchButton =
+  document.getElementById("letterSearchButton");
+const letterSearchStatus =
+  document.getElementById("letterSearchStatus");
+const letterSearchError =
+  document.getElementById("letterSearchError");
+const letterSearchModal =
+  document.getElementById("letterSearchModal");
+const closeLetterSearchModalButton =
+  document.getElementById("closeLetterSearchModalButton");
+const letterSearchResults =
+  document.getElementById("letterSearchResults");
 const openLetterRulesButton =
   document.getElementById("openLetterRulesButton");
 
@@ -104,6 +127,7 @@ let normalizedNgWords = [];
 let publicationStatusScript = null;
 let publicationStatusTimer = null;
 let publicationStatusSettled = false;
+let letterSearchController = null;
 
 function cleanupPublicationStatusRequest() {
   window.clearTimeout(publicationStatusTimer);
@@ -198,6 +222,196 @@ function loadPublicationStatus() {
     document.head.append(publicationStatusScript);
   } catch {
     showPublicationStatusError();
+  }
+}
+
+function setLetterSearchError(message) {
+  letterSearchError.textContent = message;
+}
+
+function createLetterSearchResultField(label, value) {
+  const field = document.createElement("p");
+  const labelElement = document.createElement("span");
+  labelElement.className = "letter-search-result__label";
+  labelElement.textContent = `${label}：`;
+  field.append(labelElement, document.createTextNode(value));
+  return field;
+}
+
+async function copyLetterId(id, button) {
+  try {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error("Clipboard API is unavailable.");
+    }
+
+    await navigator.clipboard.writeText(id);
+    button.textContent = "コピーしました";
+    window.setTimeout(() => {
+      button.textContent = "コピー";
+    }, COPY_FEEDBACK_DURATION_MS);
+  } catch {
+    button.textContent = "コピーできません";
+    window.setTimeout(() => {
+      button.textContent = "コピー";
+    }, COPY_FEEDBACK_DURATION_MS);
+  }
+}
+
+function normalizeLetterSearchResult(item) {
+  if (
+    !item ||
+    (typeof item.id !== "string" && typeof item.id !== "number") ||
+    typeof item.date !== "string" ||
+    typeof item.name !== "string" ||
+    typeof item.title !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: String(item.id),
+    date: item.date,
+    name: item.name,
+    title: item.title
+  };
+}
+
+function renderLetterSearchResults(results) {
+  letterSearchResults.replaceChildren();
+
+  results.forEach((result) => {
+    const card = document.createElement("article");
+    card.className = "letter-search-result";
+
+    const idRow = document.createElement("div");
+    idRow.className = "letter-search-result__id-row";
+    idRow.append(createLetterSearchResultField("ID", result.id));
+
+    const copyButton = document.createElement("button");
+    copyButton.className = "letter-search-copy-button";
+    copyButton.type = "button";
+    copyButton.textContent = "コピー";
+    copyButton.addEventListener("click", () => {
+      copyLetterId(result.id, copyButton);
+    });
+    idRow.append(copyButton);
+
+    card.append(
+      idRow,
+      createLetterSearchResultField("投稿日", result.date),
+      createLetterSearchResultField("差出人", result.name),
+      createLetterSearchResultField("タイトル", result.title)
+    );
+    letterSearchResults.append(card);
+  });
+}
+
+function openLetterSearchModal() {
+  letterSearchModal.showModal();
+  document.body.classList.add("modal-open");
+
+  requestAnimationFrame(() => {
+    letterSearchModal.classList.add("is-visible");
+  });
+}
+
+function closeLetterSearchModal() {
+  letterSearchModal.classList.remove("is-visible");
+  document.body.classList.remove("modal-open");
+
+  window.setTimeout(() => {
+    if (letterSearchModal.open) {
+      letterSearchModal.close();
+      letterSearchButton.focus();
+    }
+  }, 260);
+}
+
+async function searchLetters(event) {
+  event.preventDefault();
+
+  letterSearchController?.abort();
+  letterSearchStatus.textContent = "";
+  setLetterSearchError("");
+
+  const name = letterSearchNameInput.value.trim();
+  const title = letterSearchTitleInput.value.trim();
+  if (!name && !title) {
+    setLetterSearchError(
+      "差出人またはタイトルを入力してください。"
+    );
+    return;
+  }
+
+  const controller = new AbortController();
+  letterSearchController = controller;
+  let timedOut = false;
+  letterSearchButton.disabled = true;
+  letterSearchStatus.textContent = "お手紙を探しています……";
+
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, LETTER_SEARCH_TIMEOUT_MS);
+
+  try {
+    const url = new URL(LETTER_SEARCH_API_URL);
+    url.searchParams.set("name", name);
+    url.searchParams.set("title", title);
+
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: controller.signal
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data || typeof data.status !== "string") {
+      throw new Error("Invalid response.");
+    }
+
+    if (data.status === "error") {
+      if (typeof data.message !== "string") {
+        throw new Error("Invalid error response.");
+      }
+      letterSearchStatus.textContent = "";
+      setLetterSearchError(data.message);
+      return;
+    }
+
+    if (data.status !== "success" || !Array.isArray(data.data)) {
+      throw new Error("Invalid success response.");
+    }
+
+    const results = data.data.map(normalizeLetterSearchResult);
+    if (results.some((result) => result === null)) {
+      throw new Error("Invalid search result.");
+    }
+
+    letterSearchStatus.textContent = "";
+    if (results.length === 0) {
+      letterSearchStatus.textContent =
+        "該当するお手紙は見つかりませんでした。";
+      return;
+    }
+
+    renderLetterSearchResults(results);
+    openLetterSearchModal();
+  } catch (error) {
+    if (error.name === "AbortError" && !timedOut) {
+      return;
+    }
+
+    letterSearchStatus.textContent = "";
+    setLetterSearchError(LETTER_SEARCH_ERROR_MESSAGE);
+  } finally {
+    window.clearTimeout(timeoutId);
+    if (letterSearchController === controller) {
+      letterSearchController = null;
+      letterSearchButton.disabled = false;
+    }
   }
 }
 
@@ -756,6 +970,21 @@ form.addEventListener("submit", (event) => {
   if (!validateForm()) return;
   saveDraft();
   openPreview();
+});
+
+letterSearchForm.addEventListener("submit", searchLetters);
+closeLetterSearchModalButton.addEventListener(
+  "click",
+  closeLetterSearchModal
+);
+letterSearchModal.addEventListener("click", (event) => {
+  if (event.target === letterSearchModal) {
+    closeLetterSearchModal();
+  }
+});
+letterSearchModal.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeLetterSearchModal();
 });
 
 clearDraftButton.addEventListener("click", () => clearDraft());

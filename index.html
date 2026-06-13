@@ -235,6 +235,66 @@
       </div>
     </section>
 
+    <section class="section section--letter-search" id="letterSearchSection" aria-labelledby="letterSearchTitle">
+      <details class="letter-search-section">
+        <summary class="letter-search-section-summary">
+          <span id="letterSearchTitle">お手紙を探す</span>
+        </summary>
+
+        <div class="letter-search-section-content">
+          <p class="letter-search-introduction">
+            差出人またはタイトルから、掲載済みのお手紙を検索できます。
+          </p>
+
+          <form class="letter-search-form" id="letterSearchForm" novalidate>
+            <div class="letter-search-fields">
+              <div class="form-field">
+                <label for="letterSearchName">差出人</label>
+                <input
+                  id="letterSearchName"
+                  name="name"
+                  type="text"
+                  maxlength="20"
+                  autocomplete="off"
+                  placeholder="差出人を入力"
+                >
+              </div>
+
+              <div class="form-field">
+                <label for="letterSearchTitleInput">タイトル</label>
+                <input
+                  id="letterSearchTitleInput"
+                  name="title"
+                  type="text"
+                  maxlength="40"
+                  autocomplete="off"
+                  placeholder="タイトルを入力"
+                >
+              </div>
+            </div>
+
+            <div class="letter-search-actions">
+              <button class="button button--primary" id="letterSearchButton" type="submit">
+                手紙を探す
+              </button>
+            </div>
+
+            <p
+              class="letter-search-status"
+              id="letterSearchStatus"
+              role="status"
+              aria-live="polite"
+            ></p>
+            <p
+              class="field-error letter-search-error"
+              id="letterSearchError"
+              role="alert"
+            ></p>
+          </form>
+        </div>
+      </details>
+    </section>
+
     <section class="section section--faq" id="faqSection" aria-labelledby="faqTitle">
       <details class="faq-section">
         <summary class="faq-section-summary">
@@ -282,6 +342,27 @@
     <a href="#top">漂泊ノ海</a>
     <p>© 2026 漂泊ノ海</p>
   </footer>
+
+  <dialog
+    class="letter-search-modal"
+    id="letterSearchModal"
+    aria-labelledby="letterSearchModalTitle"
+  >
+    <div class="letter-search-modal__inner">
+      <div class="letter-search-modal__header">
+        <h2 id="letterSearchModalTitle">お手紙の検索結果</h2>
+        <button
+          class="modal-close"
+          id="closeLetterSearchModalButton"
+          type="button"
+          aria-label="検索結果を閉じる"
+        >
+          ×
+        </button>
+      </div>
+      <div class="letter-search-results" id="letterSearchResults"></div>
+    </div>
+  </dialog>
 
   <dialog class="preview-modal" id="previewModal" aria-labelledby="previewTitle">
     <div class="preview-modal__inner">
