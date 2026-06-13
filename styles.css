@@ -308,14 +308,20 @@ a {
 }
 
 .hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 700px);
+  margin-inline: auto;
   gap: 12px;
 }
 
 .hero-actions .button {
-  min-width: 150px;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 12px;
+  text-align: center;
+  line-height: 1.45;
 }
 
 .publication-status {
