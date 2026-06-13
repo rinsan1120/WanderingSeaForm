@@ -162,18 +162,20 @@ a {
   align-items: center;
   gap: 3px;
   padding: 3px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid var(--line);
+  background: rgba(3, 9, 19, 0.72);
+  border: 1px solid rgba(147, 197, 253, 0.3);
   border-radius: 999px;
 }
 
 .language-switcher__button {
+  appearance: none;
+  -webkit-appearance: none;
   min-width: 38px;
   min-height: 34px;
   padding: 0 9px;
-  color: var(--text-sub);
-  background: transparent;
-  border: 0;
+  color: var(--text-main);
+  background: rgba(11, 19, 37, 0.82);
+  border: 1px solid rgba(147, 197, 253, 0.16);
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 700;
@@ -184,12 +186,14 @@ a {
 
 .language-switcher__button[aria-pressed="true"] {
   color: var(--bg-color);
-  background: var(--accent-strong);
+  background: var(--accent-color);
+  border-color: rgba(191, 219, 254, 0.78);
 }
 
 .language-switcher__button:hover:not([aria-pressed="true"]) {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--accent-strong);
+  background: rgba(30, 58, 95, 0.72);
+  border-color: rgba(147, 197, 253, 0.42);
 }
 
 .language-switcher__button:focus-visible {
@@ -301,6 +305,17 @@ a {
   font-size: clamp(1rem, 2vw, 1.25rem);
   letter-spacing: 0.06em;
   line-height: 2.1;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.hero-actions .button {
+  min-width: 150px;
 }
 
 .publication-status {
@@ -1794,6 +1809,22 @@ textarea[aria-invalid="true"] {
     min-height: 38px;
   }
 
+  .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 10px;
+  }
+
+  .hero-actions .button {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    padding-inline: 10px;
+    text-align: center;
+    line-height: 1.45;
+  }
+
   .hero {
     padding-inline: 16px;
   }
@@ -1954,6 +1985,12 @@ textarea[aria-invalid="true"] {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-actions {
+    grid-template-columns: 1fr;
   }
 }
 .submission-layout--single {

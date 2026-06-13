@@ -111,8 +111,6 @@ const languageStorage = {
 const turnstileError = document.getElementById("turnstileError");
 const metaDescription = document.querySelector('meta[name="description"]');
 const languageButtons = document.querySelectorAll("[data-language]");
-const accordionSectionLinks =
-  document.querySelectorAll("[data-accordion-section-link]");
 
 let turnstileToken = "";
 const form = document.getElementById("submissionForm");
@@ -1301,11 +1299,12 @@ function closeSubmissionScene() {
   }, 500);
 }
 
-function openAccordionSectionFromLink(event) {
-  const targetId = event.currentTarget.getAttribute("href")?.slice(1);
-  if (!targetId) return;
+function getAccordionSection(hash) {
+  if (!hash?.startsWith("#") || hash.length === 1) {
+    return null;
+  }
 
-  const section = document.getElementById(targetId);
+  const section = document.getElementById(hash.slice(1));
   if (!section) return;
 
   const details = [...section.children].find((element) =>
@@ -1313,8 +1312,14 @@ function openAccordionSectionFromLink(event) {
       "details.letter-search-section, details.faq-section, details.contact-section"
     )
   );
-  if (!details) return;
+  return details ? { section, details } : null;
+}
 
+function openAccordionSectionFromLink(event, link) {
+  const target = getAccordionSection(link.getAttribute("href"));
+  if (!target) return;
+
+  const { section, details } = target;
   event.preventDefault();
   details.open = true;
   section.scrollIntoView({
@@ -1323,6 +1328,13 @@ function openAccordionSectionFromLink(event) {
       : "smooth",
     block: "start"
   });
+}
+
+function openAccordionSectionFromHash() {
+  const target = getAccordionSection(window.location.hash);
+  if (target) {
+    target.details.open = true;
+  }
 }
 
 [
@@ -1356,9 +1368,15 @@ languageButtons.forEach((button) => {
   });
 });
 
-accordionSectionLinks.forEach((link) => {
-  link.addEventListener("click", openAccordionSectionFromLink);
+document.addEventListener("click", (event) => {
+  const link = event.target.closest?.("[data-accordion-section-link]");
+  if (link) {
+    openAccordionSectionFromLink(event, link);
+  }
 });
+
+window.addEventListener("hashchange", openAccordionSectionFromHash);
+openAccordionSectionFromHash();
 
 letterSearchForm.addEventListener("submit", searchLetters);
 closeLetterSearchModalButton.addEventListener(
