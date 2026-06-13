@@ -907,6 +907,8 @@ textarea[aria-invalid="true"] {
   letter-spacing: 0.08em;
   cursor: pointer;
   transition: background 0.2s ease;
+  caret-color: transparent;
+  user-select: none;
 }
 
 .letter-search-section-summary:hover,
