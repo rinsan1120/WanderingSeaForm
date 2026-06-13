@@ -21,21 +21,60 @@
 </head>
 
 <body>
-  <a class="skip-link" href="#letterForm">手紙を書く場所へ移動</a>
+  <a class="skip-link" href="#letterForm" data-i18n="skip_link">手紙を書く場所へ移動</a>
 
   <header class="site-header" id="top">
     <div class="header-inner">
-      <a class="site-logo" href="#top" aria-label="漂泊ノ海 手紙の投函 トップへ">
+      <a
+        class="site-logo"
+        href="#top"
+        aria-label="漂泊ノ海 手紙の投函 トップへ"
+        data-i18n-aria-label="logo_aria"
+      >
         <span class="site-logo__main">漂泊ノ海</span>
         <span class="site-logo__sub">HYŌHAKU NO UMI</span>
       </a>
 
-      <nav class="header-nav" aria-label="ページ内メニュー">
-        <a class="header-link" href="#letterForm">お手紙を書く</a>
-        <a class="header-link" href="#letterSearchSection">お手紙を探す</a>
-        <a class="header-link" href="#faqSection">よくあるご質問</a>
-        <a class="header-link" href="#contactSection">お問い合わせ</a>
-      </nav>
+      <div class="header-actions">
+        <nav
+          class="header-nav"
+          aria-label="ページ内メニュー"
+          data-i18n-aria-label="nav_aria"
+        >
+          <a class="header-link" href="#letterForm" data-i18n="nav_submission">お手紙を書く</a>
+          <a class="header-link" href="#letterSearchSection" data-i18n="nav_search">お手紙を探す</a>
+          <a class="header-link" href="#faqSection" data-i18n="nav_faq">よくあるご質問</a>
+          <a class="header-link" href="#contactSection" data-i18n="nav_contact">お問い合わせ</a>
+        </nav>
+
+        <div
+          class="language-switcher"
+          role="group"
+          aria-label="表示言語"
+          data-i18n-aria-label="language_switcher_aria"
+        >
+          <button
+            class="language-switcher__button"
+            type="button"
+            data-language="ja"
+            aria-label="日本語で表示"
+            data-i18n-aria-label="language_ja_aria"
+            aria-pressed="true"
+          >
+            JP
+          </button>
+          <button
+            class="language-switcher__button"
+            type="button"
+            data-language="en"
+            aria-label="英語で表示"
+            data-i18n-aria-label="language_en_aria"
+            aria-pressed="false"
+          >
+            EN
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -60,9 +99,9 @@
         aria-hidden="true"
       >
       <div class="hero__content">
-        <p class="eyebrow">LETTER SUBMISSION</p>
-        <h2 id="heroTitle">漂泊ノ海お手紙投函ポスト</h2>
-        <p class="hero__copy">
+        <p class="eyebrow" data-i18n="hero_eyebrow">LETTER SUBMISSION</p>
+        <h2 id="heroTitle" data-i18n="hero_title">漂泊ノ海お手紙投函ポスト</h2>
+        <p class="hero__copy" data-i18n="hero_copy">
           いつかの、どこかの空の下の誰かへ、想いを綴ってみませんか？ 
         </p>
         <div
@@ -71,11 +110,15 @@
           role="status"
           aria-live="polite"
         >
-          <span class="publication-status__text" id="publicationStatusText">
+          <span
+            class="publication-status__text"
+            id="publicationStatusText"
+            data-i18n="publication_loading"
+          >
             掲載状況を確認しています……
           </span>
         </div>
-        <a class="button button--ghost" href="#letterForm">手紙を書く</a>
+        <a class="button button--ghost" href="#letterForm" data-i18n="hero_button">手紙を書く</a>
       </div>
 
       <div class="sea" aria-hidden="true">
@@ -83,7 +126,12 @@
         <div class="sea__wave sea__wave--front"></div>
       </div>
 
-      <a class="scroll-guide" href="#letterForm" aria-label="手紙を書く場所へ移動">
+      <a
+        class="scroll-guide"
+        href="#letterForm"
+        aria-label="手紙を書く場所へ移動"
+        data-i18n-aria-label="scroll_aria"
+      >
         <span>SCROLL</span>
         <span class="scroll-guide__line"></span>
       </a>
@@ -94,23 +142,23 @@
         <div class="letter-panel reveal">
           <div class="letter-panel__header">
             <div>
-              <p>お手紙を出す</p>
-              <span class="field-note">以下のフォームにお手紙をご記入ください。</span>
-              <span class="field-note">投函した端末のIPアドレス等、個人情報の収集は一切いたしません。</span>
+              <p data-i18n="submission_heading">お手紙を出す</p>
+              <span class="field-note" data-i18n="submission_description">以下のフォームにお手紙をご記入ください。</span>
+              <span class="field-note" data-i18n="submission_privacy">投函した端末のIPアドレス等、個人情報の収集は一切いたしません。</span>
             </div>
-            <p class="draft-status" id="draftStatus" role="status" aria-live="polite">下書き未保存</p>
+            <p class="draft-status" id="draftStatus" role="status" aria-live="polite" data-i18n="draft_none">下書き未保存</p>
           </div>
 
           <form id="submissionForm" novalidate>
-            <p class="field-error form-load-error" id="ngWordsLoadError" role="alert" hidden>
+            <p class="field-error form-load-error" id="ngWordsLoadError" role="alert" data-i18n="ng_words_load_error" hidden>
               入力内容の確認機能を読み込めませんでした。時間をおいて再度お試しください。
             </p>
 
             <div class="field-row">
               <div class="form-field">
                 <label for="senderName">
-                  差出人
-                  <span class="field-required">必須</span>
+                  <span data-i18n="field_sender">差出人</span>
+                  <span class="field-required" data-i18n="field_required">必須</span>
                 </label>
                 <input
                   id="senderName"
@@ -119,6 +167,7 @@
                   maxlength="20"
                   autocomplete="off"
                   placeholder="匿名可。実名と思しきお手紙は掲載できません。"
+                  data-i18n-placeholder="sender_placeholder"
                   required
                  >
                 <div class="field-meta">
@@ -129,8 +178,8 @@
 
               <div class="form-field">
                 <label for="title">
-                  タイトル
-                  <span class="field-required">必須</span>
+                  <span data-i18n="field_title">タイトル</span>
+                  <span class="field-required" data-i18n="field_required">必須</span>
                 </label>
                 <input
                   id="title"
@@ -139,6 +188,7 @@
                   maxlength="40"
                   autocomplete="off"
                   placeholder="お手紙のタイトル"
+                  data-i18n-placeholder="title_placeholder"
                   required
                 >
                 <div class="field-meta">
@@ -151,8 +201,8 @@
             <div class="form-field form-field--body">
             <div class="field-label-row">
               <label for="body">
-                本文
-                <span class="field-required">必須</span>
+                <span data-i18n="field_body">本文</span>
+                <span class="field-required" data-i18n="field_required">必須</span>
               </label>
 
               <button
@@ -160,12 +210,13 @@
                 id="openLetterRulesButton"
                 type="button"
               >
-                お手紙に関する注意事項
+                <span data-i18n="guidelines_button">お手紙に関する注意事項</span>
               </button>
             </div>
-              <span class="field-note">
-                ・禁止事項が含まれているお手紙はご投函いただいても掲載できません。必ず事前に禁止事項をご確認ください。<br>
-                ・お写真のご投函は、下部のお問い合わせボタンより駅長あてに「差出人」「標題」を添えてご依頼くださいませ。<br>（1通につき1枚まで）
+              <span class="field-note field-note--multiline">
+                <span data-i18n="body_note_prohibited">・禁止事項が含まれているお手紙はご投函いただいても掲載できません。必ず事前に禁止事項をご確認ください。</span>
+                <span data-i18n="body_note_photo">・お写真のご投函は、下部のお問い合わせボタンより駅長あてに「差出人」「標題」を添えてご依頼くださいませ。</span>
+                <span data-i18n="body_note_photo_limit">（1通につき1枚まで）</span>
               </span>
               <textarea
                 id="body"
@@ -173,6 +224,7 @@
                 rows="14"
                 maxlength="4000"
                 placeholder="お手紙の本文"
+                data-i18n-placeholder="body_placeholder"
                 required
               ></textarea>
               <div class="field-meta">
@@ -183,8 +235,8 @@
 
             <div class="form-field form-field--manager-message">
               <label for="messageToManager">
-                駅長へのご要望、ご連絡事項等
-                <span class="field-optional">任意</span>
+                <span data-i18n="field_manager">駅長へのご要望、ご連絡事項等</span>
+                <span class="field-optional" data-i18n="field_optional">任意</span>
               </label>
               <textarea
                 id="messageToManager"
@@ -192,6 +244,7 @@
                 rows="3"
                 maxlength="500"
                 placeholder="ワールドへのご要望や、駅長へのご連絡事項があればご記入ください。"
+                data-i18n-placeholder="manager_placeholder"
               ></textarea>
               <div class="field-meta">
                 <p class="field-error" id="messageToManagerError"></p>
@@ -202,7 +255,7 @@
             <div class="rules-box">
               <label class="check-field">
                 <input id="agreement" name="agreement" type="checkbox" required>
-                <span>
+                <span data-i18n="agreement_label">
                   お手紙に禁止事項に該当する内容が含まれていないことを確認しました。
                 </span>
               </label>
@@ -228,8 +281,8 @@
             <p class="sample-notice">
             </p>
             <div class="form-actions">
-              <button class="button button--ghost" id="clearDraftButton" type="button">下書きを消す</button>
-              <button class="button button--primary" id="confirmSubmissionButton" type="submit" disabled>投函前に確認する</button>
+              <button class="button button--ghost" id="clearDraftButton" type="button" data-i18n="clear_draft">下書きを消す</button>
+              <button class="button button--primary" id="confirmSubmissionButton" type="submit" data-i18n="confirm_submission" disabled>投函前に確認する</button>
             </div>
           </form>
         </div>
@@ -239,18 +292,18 @@
     <section class="section section--letter-search" id="letterSearchSection" aria-labelledby="letterSearchTitle">
       <details class="letter-search-section">
         <summary class="letter-search-section-summary">
-          <span id="letterSearchTitle">お手紙を探す</span>
+          <span id="letterSearchTitle" data-i18n="search_heading">お手紙を探す</span>
         </summary>
 
         <div class="letter-search-section-content">
-          <p class="letter-search-introduction">
+          <p class="letter-search-introduction" data-i18n="search_description">
             差出人またはタイトルから、掲載済みのお手紙を検索できます。
           </p>
 
           <form class="letter-search-form" id="letterSearchForm" novalidate>
             <div class="letter-search-fields">
               <div class="form-field">
-                <label for="letterSearchName">差出人</label>
+                <label for="letterSearchName" data-i18n="field_sender">差出人</label>
                 <input
                   id="letterSearchName"
                   name="name"
@@ -258,11 +311,12 @@
                   maxlength="20"
                   autocomplete="off"
                   placeholder="差出人を入力"
+                  data-i18n-placeholder="search_sender_placeholder"
                 >
               </div>
 
               <div class="form-field">
-                <label for="letterSearchTitleInput">タイトル</label>
+                <label for="letterSearchTitleInput" data-i18n="field_title">タイトル</label>
                 <input
                   id="letterSearchTitleInput"
                   name="title"
@@ -270,12 +324,13 @@
                   maxlength="40"
                   autocomplete="off"
                   placeholder="タイトルを入力"
+                  data-i18n-placeholder="search_title_placeholder"
                 >
               </div>
             </div>
 
             <div class="letter-search-actions">
-              <button class="button button--primary" id="letterSearchButton" type="submit">
+              <button class="button button--primary" id="letterSearchButton" type="submit" data-i18n="search_button">
                 手紙を探す
               </button>
             </div>
@@ -299,14 +354,14 @@
     <section class="section section--faq" id="faqSection" aria-labelledby="faqTitle">
       <details class="faq-section">
         <summary class="faq-section-summary">
-          <span id="faqTitle">よくあるご質問</span>
+          <span id="faqTitle" data-i18n="faq_heading">よくあるご質問</span>
         </summary>
 
         <div class="faq-section-content">
-          <p class="faq-introduction">
+          <p class="faq-introduction" data-i18n="faq_description">
             お手紙の投函や掲載について、よくいただくご質問をまとめています。
           </p>
-          <p class="faq-status" id="faqStatus" role="status" aria-live="polite">
+          <p class="faq-status" id="faqStatus" role="status" aria-live="polite" data-i18n="faq_loading">
             よくあるご質問を読み込んでいます……
           </p>
           <div class="faq-list" id="faqList"></div>
@@ -317,11 +372,11 @@
     <section class="section section--trust" id="contactSection" aria-labelledby="contactTitle">
       <details class="contact-section trust-panel">
         <summary class="contact-section-summary">
-          <span id="contactTitle">お問い合わせ</span>
+          <span id="contactTitle" data-i18n="contact_heading">お問い合わせ</span>
         </summary>
 
         <div class="contact-section-content">
-          <p>
+          <p data-i18n="contact_description">
             投函フォームの不具合や、お手紙の掲載状況に関するお問い合わせは、駅長までDMにてご連絡ください。
           </p>
 
@@ -331,7 +386,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            Xで問い合わせる
+            <span data-i18n="contact_button">Xで問い合わせる</span>
           </a>
         </div>
       </details>
@@ -340,8 +395,8 @@
   </main>
 
   <footer class="site-footer">
-    <a href="#top">漂泊ノ海</a>
-    <p>© 2026 漂泊ノ海</p>
+    <a href="#top" aria-label="漂泊ノ海のトップへ戻る" data-i18n-aria-label="footer_top_aria">漂泊ノ海</a>
+    <p data-i18n="footer_copyright">© 2026 漂泊ノ海</p>
   </footer>
 
   <dialog
@@ -351,12 +406,13 @@
   >
     <div class="letter-search-modal__inner">
       <div class="letter-search-modal__header">
-        <h2 id="letterSearchModalTitle">お手紙の検索結果</h2>
+        <h2 id="letterSearchModalTitle" data-i18n="search_results_title">お手紙の検索結果</h2>
         <button
           class="modal-close"
           id="closeLetterSearchModalButton"
           type="button"
           aria-label="検索結果を閉じる"
+          data-i18n-aria-label="search_close_aria"
         >
           ×
         </button>
@@ -369,10 +425,10 @@
     <div class="preview-modal__inner">
       <div class="preview-modal__header">
         <div>
-          <p class="preview-modal__eyebrow">FINAL REVIEW</p>
-          <h2 id="previewTitle">この手紙を漂泊ノ海へ流しますか？</h2>
+          <p class="preview-modal__eyebrow" data-i18n="preview_eyebrow">FINAL REVIEW</p>
+          <h2 id="previewTitle" data-i18n="preview_title">この手紙を漂泊ノ海へ流しますか？</h2>
         </div>
-        <button class="modal-close" id="closePreviewButton" type="button" aria-label="確認画面を閉じる">×</button>
+        <button class="modal-close" id="closePreviewButton" type="button" aria-label="確認画面を閉じる" data-i18n-aria-label="preview_close_aria">×</button>
       </div>
 
       <article class="letter-preview">
@@ -380,14 +436,14 @@
         <p class="letter-preview__body" id="previewLetterBody"></p>
         <p class="letter-preview__sender" id="previewLetterSender"></p>
         <div class="letter-preview__manager-message" id="previewMessageToManagerWrapper" hidden>
-          <p class="letter-preview__manager-label">駅長へのご要望・ご連絡事項</p>
+          <p class="letter-preview__manager-label" data-i18n="preview_manager_label">駅長へのご要望・ご連絡事項</p>
           <p id="previewMessageToManager"></p>
         </div>
       </article>
 
       <div class="preview-modal__actions">
-        <button class="button button--ghost" id="editButton" type="button">書き直す</button>
-        <button class="button button--primary" id="submitLetterButton" type="button">この内容で海へ流す</button>
+        <button class="button button--ghost" id="editButton" type="button" data-i18n="preview_edit">書き直す</button>
+        <button class="button button--primary" id="submitLetterButton" type="button" data-i18n="preview_submit">この内容で海へ流す</button>
       </div>
     </div>
   </dialog>
@@ -398,12 +454,12 @@
       <div class="envelope" aria-hidden="true">
         <span class="envelope__flap"></span>
       </div>
-      <p class="submission-scene__status" id="submissionSceneStatus">手紙を海へ運んでいます……</p>
+      <p class="submission-scene__status" id="submissionSceneStatus" data-i18n="submission_sending">手紙を海へ運んでいます……</p>
       <div class="submission-scene__result" id="submissionResult" hidden>
-        <p class="submission-scene__eyebrow">LETTER RECEIVED</p>
-        <h2>投函完了</h2>
-        <p>いつかの、どこかの空の下の誰かへ</p>
-        <button class="button button--ghost" id="writeAnotherButton" type="button">もう一通、手紙を書く</button>
+        <p class="submission-scene__eyebrow" data-i18n="submission_received">LETTER RECEIVED</p>
+        <h2 data-i18n="submission_complete">投函完了</h2>
+        <p data-i18n="submission_complete_copy">いつかの、どこかの空の下の誰かへ</p>
+        <button class="button button--ghost" id="writeAnotherButton" type="button" data-i18n="submission_another">もう一通、手紙を書く</button>
       </div>
     </div>
     <div class="submission-sea" aria-hidden="true"></div>
@@ -417,8 +473,8 @@
   <div class="letter-rules-modal__inner">
     <div class="letter-rules-modal__header">
       <div>
-        <p class="letter-rules-modal__eyebrow">LETTER GUIDELINES</p>
-        <h2 id="letterRulesModalTitle">お手紙に関する注意事項</h2>
+        <p class="letter-rules-modal__eyebrow" data-i18n="guidelines_eyebrow">LETTER GUIDELINES</p>
+        <h2 id="letterRulesModalTitle" data-i18n="guidelines_title">お手紙に関する注意事項</h2>
       </div>
 
       <button
@@ -426,6 +482,7 @@
         id="closeLetterRulesButton"
         type="button"
         aria-label="注意事項を閉じる"
+        data-i18n-aria-label="guidelines_close_aria"
       >
         ×
       </button>
@@ -435,7 +492,7 @@
       class="letter-rules-modal__content"
       id="letterRulesModalContent"
     >
-      <p class="letter-rules-modal__loading">
+      <p class="letter-rules-modal__loading" data-i18n="guidelines_loading">
         注意事項を読み込んでいます。
       </p>
     </div>

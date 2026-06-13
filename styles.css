@@ -114,6 +114,13 @@ a {
   letter-spacing: 0.22em;
 }
 
+.header-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
 .header-nav {
   display: flex;
   align-items: center;
@@ -147,6 +154,47 @@ a {
 .header-link:hover::after,
 .header-link:focus-visible::after {
   transform: scaleX(1);
+}
+
+.language-switcher {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.language-switcher__button {
+  min-width: 38px;
+  min-height: 34px;
+  padding: 0 9px;
+  color: var(--text-sub);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.language-switcher__button[aria-pressed="true"] {
+  color: var(--bg-color);
+  background: var(--accent-strong);
+}
+
+.language-switcher__button:hover:not([aria-pressed="true"]) {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.language-switcher__button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 .hero {
@@ -1668,7 +1716,23 @@ textarea[aria-invalid="true"] {
   line-height: 1.7;
 }
 
+.field-note--multiline > span {
+  display: block;
+}
+
 @media (max-width: 900px) {
+  .header-actions {
+    gap: 14px;
+  }
+
+  .header-nav {
+    gap: 14px;
+  }
+
+  .header-link {
+    font-size: 0.78rem;
+  }
+
   .submission-layout {
     grid-template-columns: 1fr;
   }
@@ -1686,6 +1750,12 @@ textarea[aria-invalid="true"] {
   }
 }
 
+@media (max-width: 760px) {
+  .header-nav {
+    display: none;
+  }
+}
+
 @media (max-width: 620px) {
   :root {
     --header-height: 68px;
@@ -1700,6 +1770,10 @@ textarea[aria-invalid="true"] {
     width: min(calc(100% - 28px), var(--max-width));
   }
 
+  .header-actions {
+    margin-left: auto;
+  }
+
   .submission-section-stack {
     width: min(calc(100% - 28px), 860px);
     padding: 88px 0;
@@ -1707,6 +1781,15 @@ textarea[aria-invalid="true"] {
 
   .header-link {
     display: none;
+  }
+
+  .header-nav {
+    display: none;
+  }
+
+  .language-switcher__button {
+    min-width: 40px;
+    min-height: 38px;
   }
 
   .hero {
@@ -1899,6 +1982,15 @@ textarea[aria-invalid="true"] {
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
+  }
+
+  html[lang="en"] .hero__copy {
+    font-size: 0.98rem;
+    line-height: 1.8;
+  }
+
+  html[lang="en"] .letter-panel__header .draft-status {
+    white-space: normal;
   }
 
   .letter-rules-modal {

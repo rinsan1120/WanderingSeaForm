@@ -1,10 +1,18 @@
 const DRAFT_STORAGE_KEY = "hyohaku-letter-form-draft-v1";
+const LANGUAGE_STORAGE_KEY = "hyohaku-letter-form-language";
 const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
-const NG_WORD_ERROR_MESSAGE = "使用できない単語が含まれています。内容をご確認ください。";
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXF5NHG1mrkaOJBqbXRmlotvcX9If5d_lqa2xnDSSzA3LzJF4rishV5KLZmndcasquQg/exec";
-const FAQ_CONTENT_URL = "content/faq.txt";
+const LANGUAGE_CONTENT_URL = "content/language.json";
+const FAQ_CONTENT_URLS = {
+  ja: "content/faq-ja.txt",
+  en: "content/faq-en.txt"
+};
+const LETTER_RULES_URLS = {
+  ja: "content/letter-guidelines-ja.html",
+  en: "content/letter-guidelines-en.html"
+};
 const PUBLICATION_STATUS_API_URL =
   "https://script.google.com/macros/s/AKfycbxKP3hYT3CVaqZRCS8b8qvOK_41JCf5ADt9xr-I7TICG0t4YdlmFNtTXxXfKSI4CqqAtQ/exec";
 const PUBLICATION_STATUS_CALLBACK_NAME =
@@ -13,9 +21,48 @@ const PUBLICATION_STATUS_TIMEOUT_MS = 10000;
 const LETTER_SEARCH_API_URL =
   "https://script.google.com/macros/s/AKfycbxkSc8MyUuOV_kRmEEx_xThmehCWpShYOpqnP4fbLdjVpwx5njr5A3lneQlS__bD-Wurg/exec";
 const LETTER_SEARCH_TIMEOUT_MS = 15000;
-const LETTER_SEARCH_ERROR_MESSAGE =
-  "お手紙の検索に失敗しました。時間をおいて再度お試しください。";
 const COPY_FEEDBACK_DURATION_MS = 2000;
+
+const DEFAULT_TRANSLATIONS = {
+  publication_loading: "掲載状況を確認しています……",
+  publication_error: "掲載状況を取得できませんでした",
+  publication_success: "掲載状況：　{date}　までに投函されたお手紙を掲載しています。",
+  draft_none: "下書き未保存",
+  draft_saved: "この端末に下書きを保存しました",
+  draft_unavailable: "下書き保存は利用できません",
+  draft_saving: "下書きを保存しています……",
+  draft_restored: "保存されていた下書きを復元しました",
+  draft_deleted: "下書きを削除しました",
+  draft_clear_confirm: "この端末に保存された下書きと入力内容を消しますか？",
+  validation_sender_required: "差出人を入力してください。",
+  validation_title_required: "標題を入力してください。",
+  validation_body_required: "本文を入力してください。",
+  validation_body_min: "本文は10文字以上で入力してください。",
+  validation_manager_max: "駅長へのご要望・ご連絡事項は500文字以内で入力してください。",
+  validation_agreement: "内容を確認し、同意欄にチェックを入れてください。",
+  validation_ng_word: "使用できない単語が含まれています。内容をご確認ください。",
+  turnstile_expired: "確認の有効期限が切れました。もう一度確認してください。",
+  turnstile_error: "確認処理に失敗しました。もう一度お試しください。",
+  search_loading: "お手紙を探しています……",
+  search_required: "差出人またはタイトルを入力してください。",
+  search_no_results: "該当するお手紙は見つかりませんでした。",
+  search_failed: "お手紙の検索に失敗しました。時間をおいて再度お試しください。",
+  search_result_id: "ID",
+  search_result_date: "投稿日",
+  field_sender: "差出人",
+  field_title: "タイトル",
+  copy: "コピー",
+  copy_success: "コピーしました",
+  copy_failed: "コピーできません",
+  faq_loading: "よくあるご質問を読み込んでいます……",
+  faq_empty: "現在、掲載中のよくあるご質問はありません。",
+  faq_error: "よくあるご質問を読み込めませんでした。\n時間をおいて再度お試しください。",
+  guidelines_loading: "注意事項を読み込んでいます。",
+  guidelines_error: "注意事項を読み込めませんでした。時間をおいて再度お試しください。",
+  preview_sender: "差出人　{name}",
+  preview_anonymous: "差出人　名もなき旅人",
+  submission_failed: "GASへの保存に失敗しました。"
+};
 
 const draftStorage = {
   get() {
@@ -43,7 +90,27 @@ const draftStorage = {
     }
   }
 };
+
+const languageStorage = {
+  get() {
+    try {
+      return window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  },
+  set(value) {
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, value);
+    } catch {
+      // 言語保存が利用できなくても、現在のページでは切り替えを継続する。
+    }
+  }
+};
+
 const turnstileError = document.getElementById("turnstileError");
+const metaDescription = document.querySelector('meta[name="description"]');
+const languageButtons = document.querySelectorAll("[data-language]");
 
 let turnstileToken = "";
 const form = document.getElementById("submissionForm");
@@ -116,9 +183,34 @@ const letterRulesModal =
 const letterRulesModalContent =
   document.getElementById("letterRulesModalContent");
 
-const LETTER_RULES_URL = "content/letter-guidelines.html";
+const htmlFallbackTranslations = {
+  document_title: document.title,
+  meta_description: metaDescription?.content ?? ""
+};
+document.querySelectorAll("[data-i18n]").forEach((element) => {
+  htmlFallbackTranslations[element.dataset.i18n] = element.textContent.trim();
+});
+document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+  htmlFallbackTranslations[element.dataset.i18nPlaceholder] =
+    element.getAttribute("placeholder") ?? "";
+});
+document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+  htmlFallbackTranslations[element.dataset.i18nAriaLabel] =
+    element.getAttribute("aria-label") ?? "";
+});
 
-let letterRulesLoaded = false;
+let translations = {
+  ja: {
+    ...htmlFallbackTranslations,
+    ...DEFAULT_TRANSLATIONS
+  }
+};
+let currentLanguage = "ja";
+let preferredLanguage = "ja";
+let languageDataLoaded = false;
+let letterRulesLoadedLanguage = null;
+const letterRulesCache = new Map();
+const faqContentCache = new Map();
 let saveTimer = null;
 let isSubmitting = false;
 let hasAttemptedSubmit = false;
@@ -127,7 +219,178 @@ let normalizedNgWords = [];
 let publicationStatusScript = null;
 let publicationStatusTimer = null;
 let publicationStatusSettled = false;
+let publicationStatusState = "loading";
+let publicationStatusValue = null;
 let letterSearchController = null;
+let letterSearchStatusKey = "";
+let letterSearchErrorKey = "";
+let letterSearchRawError = "";
+let lastLetterSearchResults = [];
+let draftStatusKey = "draft_none";
+let turnstileErrorKey = "";
+let faqRequestId = 0;
+
+function getPreferredLanguage() {
+  const savedLanguage = languageStorage.get();
+  if (savedLanguage === "ja" || savedLanguage === "en") {
+    return savedLanguage;
+  }
+
+  return String(navigator.language || "")
+    .toLowerCase()
+    .startsWith("ja")
+    ? "ja"
+    : "en";
+}
+
+function t(key, parameters = {}) {
+  const template =
+    translations[currentLanguage]?.[key] ??
+    translations.ja?.[key] ??
+    DEFAULT_TRANSLATIONS[key] ??
+    key;
+
+  return Object.entries(parameters).reduce(
+    (text, [name, value]) =>
+      text.replaceAll(`{${name}}`, String(value)),
+    template
+  );
+}
+
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLanguage;
+  document.title = t("document_title");
+  if (metaDescription) {
+    metaDescription.content = t("meta_description");
+  }
+
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.setAttribute(
+      "placeholder",
+      t(element.dataset.i18nPlaceholder)
+    );
+  });
+  document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+    element.setAttribute(
+      "aria-label",
+      t(element.dataset.i18nAriaLabel)
+    );
+  });
+
+  languageButtons.forEach((button) => {
+    button.setAttribute(
+      "aria-pressed",
+      String(button.dataset.language === currentLanguage)
+    );
+  });
+}
+
+function setDraftStatus(key) {
+  draftStatusKey = key;
+  draftStatus.textContent = t(key);
+}
+
+function setLetterSearchStatus(key = "") {
+  letterSearchStatusKey = key;
+  letterSearchStatus.textContent = key ? t(key) : "";
+}
+
+function setLetterSearchError(message = "", key = "") {
+  letterSearchErrorKey = key;
+  letterSearchRawError = key ? "" : message;
+  letterSearchError.textContent = key ? t(key) : message;
+}
+
+function renderPublicationStatus() {
+  if (publicationStatusState === "success" && publicationStatusValue) {
+    const formattedDate = formatPublicationStatusDate(
+      publicationStatusValue,
+      currentLanguage
+    );
+    publicationStatusText.textContent = formattedDate
+      ? t("publication_success", { date: formattedDate })
+      : t("publication_error");
+    return;
+  }
+
+  publicationStatusText.textContent = t(
+    publicationStatusState === "error"
+      ? "publication_error"
+      : "publication_loading"
+  );
+}
+
+function renderDynamicTranslations() {
+  setDraftStatus(draftStatusKey);
+  turnstileError.textContent = turnstileErrorKey
+    ? t(turnstileErrorKey)
+    : "";
+  setLetterSearchStatus(letterSearchStatusKey);
+  setLetterSearchError(letterSearchRawError, letterSearchErrorKey);
+  renderPublicationStatus();
+  updateValidationState();
+
+  if (lastLetterSearchResults.length > 0) {
+    renderLetterSearchResults(lastLetterSearchResults);
+  }
+  if (previewModal.open) {
+    updatePreviewContent();
+  }
+}
+
+async function setLanguage(language, { save = true } = {}) {
+  if (!languageDataLoaded || !translations[language]) {
+    language = "ja";
+  }
+
+  currentLanguage = language;
+  if (save) {
+    languageStorage.set(language);
+  }
+
+  applyStaticTranslations();
+  renderDynamicTranslations();
+  await loadFaqContent(language);
+
+  if (letterRulesModal.open) {
+    await loadLetterRulesContent(language);
+  } else {
+    letterRulesLoadedLanguage = null;
+  }
+}
+
+async function initializeI18n() {
+  preferredLanguage = getPreferredLanguage();
+
+  try {
+    const response = await fetch(LANGUAGE_CONTENT_URL, {
+      cache: "no-cache"
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (
+      !data ||
+      typeof data.ja !== "object" ||
+      typeof data.en !== "object"
+    ) {
+      throw new Error("Invalid language data.");
+    }
+
+    translations = data;
+    languageDataLoaded = true;
+  } catch (error) {
+    console.error("翻訳データの読み込みに失敗しました。", error);
+    preferredLanguage = "ja";
+  }
+
+  await setLanguage(preferredLanguage, { save: false });
+}
 
 function cleanupPublicationStatusRequest() {
   window.clearTimeout(publicationStatusTimer);
@@ -141,15 +404,12 @@ function showPublicationStatusError() {
   if (publicationStatusSettled) return;
 
   publicationStatusSettled = true;
+  publicationStatusState = "error";
   cleanupPublicationStatusRequest();
-
-  if (publicationStatusText) {
-    publicationStatusText.textContent =
-      "掲載状況を取得できませんでした";
-  }
+  renderPublicationStatus();
 }
 
-function formatPublicationStatusDate(value) {
+function formatPublicationStatusDate(value, language = currentLanguage) {
   if (typeof value !== "string") return null;
 
   const match =
@@ -170,6 +430,19 @@ function formatPublicationStatusDate(value) {
     return null;
   }
 
+  if (language === "en") {
+    const dateText = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC"
+    }).format(date);
+    const hourNumber = Number(hour);
+    const period = hourNumber >= 12 ? "PM" : "AM";
+    const displayHour = hourNumber % 12 || 12;
+    return `${dateText} at ${displayHour}:${minute} ${period}`;
+  }
+
   return `${year}年${month}月${day}日 ${hour}:${minute}`;
 }
 
@@ -184,12 +457,10 @@ function handlePublicationStatusResponse(data) {
   }
 
   publicationStatusSettled = true;
+  publicationStatusState = "success";
+  publicationStatusValue = data.last_updated;
   cleanupPublicationStatusRequest();
-
-  if (publicationStatusText) {
-    publicationStatusText.textContent =
-      `掲載状況：　${formattedDate}　までに投函されたお手紙を掲載しています。`;
-  }
+  renderPublicationStatus();
 }
 
 window[PUBLICATION_STATUS_CALLBACK_NAME] =
@@ -225,10 +496,6 @@ function loadPublicationStatus() {
   }
 }
 
-function setLetterSearchError(message) {
-  letterSearchError.textContent = message;
-}
-
 function createLetterSearchResultField(label, value) {
   const field = document.createElement("p");
   const labelElement = document.createElement("span");
@@ -245,14 +512,14 @@ async function copyLetterId(id, button) {
     }
 
     await navigator.clipboard.writeText(id);
-    button.textContent = "コピーしました";
+    button.textContent = t("copy_success");
     window.setTimeout(() => {
-      button.textContent = "コピー";
+      button.textContent = t("copy");
     }, COPY_FEEDBACK_DURATION_MS);
   } catch {
-    button.textContent = "コピーできません";
+    button.textContent = t("copy_failed");
     window.setTimeout(() => {
-      button.textContent = "コピー";
+      button.textContent = t("copy");
     }, COPY_FEEDBACK_DURATION_MS);
   }
 }
@@ -276,6 +543,34 @@ function normalizeLetterSearchResult(item) {
   };
 }
 
+function formatLetterSearchDate(value) {
+  const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(value);
+  if (!match || currentLanguage === "ja") {
+    return value;
+  }
+
+  const [, yearText, monthText, dayText] = match;
+  const date = new Date(Date.UTC(
+    Number(yearText),
+    Number(monthText) - 1,
+    Number(dayText)
+  ));
+  if (
+    date.getUTCFullYear() !== Number(yearText) ||
+    date.getUTCMonth() !== Number(monthText) - 1 ||
+    date.getUTCDate() !== Number(dayText)
+  ) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(date);
+}
+
 function renderLetterSearchResults(results) {
   letterSearchResults.replaceChildren();
 
@@ -285,12 +580,17 @@ function renderLetterSearchResults(results) {
 
     const idRow = document.createElement("div");
     idRow.className = "letter-search-result__id-row";
-    idRow.append(createLetterSearchResultField("ID", result.id));
+    idRow.append(
+      createLetterSearchResultField(
+        t("search_result_id"),
+        result.id
+      )
+    );
 
     const copyButton = document.createElement("button");
     copyButton.className = "letter-search-copy-button";
     copyButton.type = "button";
-    copyButton.textContent = "コピー";
+    copyButton.textContent = t("copy");
     copyButton.addEventListener("click", () => {
       copyLetterId(result.id, copyButton);
     });
@@ -298,9 +598,12 @@ function renderLetterSearchResults(results) {
 
     card.append(
       idRow,
-      createLetterSearchResultField("投稿日", result.date),
-      createLetterSearchResultField("差出人", result.name),
-      createLetterSearchResultField("タイトル", result.title)
+      createLetterSearchResultField(
+        t("search_result_date"),
+        formatLetterSearchDate(result.date)
+      ),
+      createLetterSearchResultField(t("field_sender"), result.name),
+      createLetterSearchResultField(t("field_title"), result.title)
     );
     letterSearchResults.append(card);
   });
@@ -331,15 +634,13 @@ async function searchLetters(event) {
   event.preventDefault();
 
   letterSearchController?.abort();
-  letterSearchStatus.textContent = "";
+  setLetterSearchStatus();
   setLetterSearchError("");
 
   const name = letterSearchNameInput.value.trim();
   const title = letterSearchTitleInput.value.trim();
   if (!name && !title) {
-    setLetterSearchError(
-      "差出人またはタイトルを入力してください。"
-    );
+    setLetterSearchError("", "search_required");
     return;
   }
 
@@ -347,7 +648,7 @@ async function searchLetters(event) {
   letterSearchController = controller;
   let timedOut = false;
   letterSearchButton.disabled = true;
-  letterSearchStatus.textContent = "お手紙を探しています……";
+  setLetterSearchStatus("search_loading");
 
   const timeoutId = window.setTimeout(() => {
     timedOut = true;
@@ -376,7 +677,7 @@ async function searchLetters(event) {
       if (typeof data.message !== "string") {
         throw new Error("Invalid error response.");
       }
-      letterSearchStatus.textContent = "";
+      setLetterSearchStatus();
       setLetterSearchError(data.message);
       return;
     }
@@ -390,13 +691,14 @@ async function searchLetters(event) {
       throw new Error("Invalid search result.");
     }
 
-    letterSearchStatus.textContent = "";
+    setLetterSearchStatus();
     if (results.length === 0) {
-      letterSearchStatus.textContent =
-        "該当するお手紙は見つかりませんでした。";
+      lastLetterSearchResults = [];
+      setLetterSearchStatus("search_no_results");
       return;
     }
 
+    lastLetterSearchResults = results;
     renderLetterSearchResults(results);
     openLetterSearchModal();
   } catch (error) {
@@ -404,8 +706,8 @@ async function searchLetters(event) {
       return;
     }
 
-    letterSearchStatus.textContent = "";
-    setLetterSearchError(LETTER_SEARCH_ERROR_MESSAGE);
+    setLetterSearchStatus();
+    setLetterSearchError("", "search_failed");
   } finally {
     window.clearTimeout(timeoutId);
     if (letterSearchController === controller) {
@@ -543,28 +845,102 @@ function renderFaqItems(faqItems) {
   });
 }
 
-async function loadFaqContent() {
-  try {
-    const response = await fetch(FAQ_CONTENT_URL, {
-      cache: "no-cache"
-    });
+async function loadFaqContent(language = currentLanguage) {
+  const requestId = ++faqRequestId;
+  const openFaqIndexes = [...faqList.querySelectorAll(".faq-item")]
+    .map((item, index) => item.open ? index : -1)
+    .filter((index) => index >= 0);
 
-    if (!response.ok) {
-      throw new Error(`FAQの取得に失敗しました（HTTP ${response.status}）。`);
+  faqStatus.hidden = false;
+  faqStatus.textContent = t("faq_loading");
+
+  try {
+    let content = faqContentCache.get(language);
+    if (!content) {
+      const response = await fetch(FAQ_CONTENT_URLS[language], {
+        cache: "no-cache"
+      });
+
+      if (!response.ok) {
+        throw new Error(`FAQ HTTP ${response.status}`);
+      }
+
+      content = await response.text();
+      faqContentCache.set(language, content);
     }
 
-    const faqItems = parseFaqContent(await response.text());
+    if (requestId !== faqRequestId || language !== currentLanguage) {
+      return;
+    }
+
+    const faqItems = parseFaqContent(content);
     if (faqItems.length === 0) {
-      faqStatus.textContent = "現在、掲載中のよくあるご質問はありません。";
+      faqList.replaceChildren();
+      faqStatus.textContent = t("faq_empty");
       return;
     }
 
     renderFaqItems(faqItems);
+    openFaqIndexes.forEach((index) => {
+      const item = faqList.children[index];
+      if (item) item.open = true;
+    });
     faqStatus.hidden = true;
   } catch (error) {
+    if (requestId !== faqRequestId || language !== currentLanguage) {
+      return;
+    }
+
     console.error("よくあるご質問の読み込みに失敗しました。", error);
-    faqStatus.textContent =
-      "よくあるご質問を読み込めませんでした。\n時間をおいて再度お試しください。";
+    faqList.replaceChildren();
+    faqStatus.textContent = t("faq_error");
+  }
+}
+
+function renderLetterRulesMessage(className, message) {
+  const paragraph = document.createElement("p");
+  paragraph.className = className;
+  paragraph.textContent = message;
+  letterRulesModalContent.replaceChildren(paragraph);
+}
+
+async function loadLetterRulesContent(language = currentLanguage) {
+  if (letterRulesLoadedLanguage === language) return;
+
+  renderLetterRulesMessage(
+    "letter-rules-modal__loading",
+    t("guidelines_loading")
+  );
+
+  try {
+    let content = letterRulesCache.get(language);
+    if (!content) {
+      const response = await fetch(LETTER_RULES_URLS[language], {
+        cache: "no-cache"
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      content = await response.text();
+      letterRulesCache.set(language, content);
+    }
+
+    if (language !== currentLanguage) return;
+
+    letterRulesModalContent.innerHTML = content;
+    letterRulesLoadedLanguage = language;
+  } catch (error) {
+    console.error(
+      "お手紙に関する注意事項の読み込みに失敗しました。",
+      error
+    );
+    renderLetterRulesMessage(
+      "letter-rules-modal__error",
+      t("guidelines_error")
+    );
+    letterRulesLoadedLanguage = null;
   }
 }
 
@@ -575,38 +951,7 @@ async function openLetterRulesModal() {
     letterRulesModal.classList.add("is-visible");
   });
 
-  if (letterRulesLoaded) {
-    return;
-  }
-
-  letterRulesModalContent.innerHTML =
-    '<p class="letter-rules-modal__loading">注意事項を読み込んでいます。</p>';
-
-  try {
-    const response = await fetch(LETTER_RULES_URL, {
-      cache: "no-cache"
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    letterRulesModalContent.innerHTML =
-      await response.text();
-
-    letterRulesLoaded = true;
-  } catch (error) {
-    console.error(
-      "お手紙に関する注意事項の読み込みに失敗しました。",
-      error
-    );
-
-    letterRulesModalContent.innerHTML = `
-      <p class="letter-rules-modal__error">
-        注意事項を読み込めませんでした。時間をおいて再度お試しください。
-      </p>
-    `;
-  }
+  await loadLetterRulesContent(currentLanguage);
 }
 
 function closeLetterRulesModal() {
@@ -620,21 +965,22 @@ function closeLetterRulesModal() {
 }
 function handleTurnstileSuccess(token) {
   turnstileToken = token;
+  turnstileErrorKey = "";
   turnstileError.textContent = "";
   updateValidationState();
 }
 
 function handleTurnstileExpired() {
   turnstileToken = "";
-  turnstileError.textContent =
-    "確認の有効期限が切れました。もう一度確認してください。";
+  turnstileErrorKey = "turnstile_expired";
+  turnstileError.textContent = t(turnstileErrorKey);
   updateValidationState();
 }
 
 function handleTurnstileError() {
   turnstileToken = "";
-  turnstileError.textContent =
-    "確認処理に失敗しました。もう一度お試しください。";
+  turnstileErrorKey = "turnstile_error";
+  turnstileError.textContent = t(turnstileErrorKey);
   updateValidationState();
 }
 window.handleTurnstileSuccess = handleTurnstileSuccess;
@@ -681,17 +1027,17 @@ function containsNgWord(value) {
 function getValidationState() {
   const data = getFormData();
   const baseErrors = {
-    senderName: data.senderName ? "" : "差出人を入力してください。",
-    title: data.title ? "" : "標題を入力してください。",
+    senderName: data.senderName ? "" : t("validation_sender_required"),
+    title: data.title ? "" : t("validation_title_required"),
     body: !data.body
-      ? "本文を入力してください。"
+      ? t("validation_body_required")
       : data.body.length < 10
-        ? "本文は10文字以上で入力してください。"
+        ? t("validation_body_min")
         : "",
     messageToManager: data.messageToManager.length > 500
-      ? "駅長へのご要望・ご連絡事項は500文字以内で入力してください。"
+      ? t("validation_manager_max")
       : "",
-    agreement: data.agreement ? "" : "内容を確認し、同意欄にチェックを入れてください。"
+    agreement: data.agreement ? "" : t("validation_agreement")
   };
   const ngWordErrors = {
     senderName: containsNgWord(senderNameInput.value),
@@ -719,18 +1065,18 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
   setFieldError(
     senderNameInput,
     senderNameError,
-    ngWordErrors.senderName ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.senderName : ""
+    ngWordErrors.senderName ? t("validation_ng_word") : showBaseErrors ? baseErrors.senderName : ""
   );
   setFieldError(
     titleInput,
     titleError,
-    ngWordErrors.title ? NG_WORD_ERROR_MESSAGE : showBaseErrors ? baseErrors.title : ""
+    ngWordErrors.title ? t("validation_ng_word") : showBaseErrors ? baseErrors.title : ""
   );
   setFieldError(
     bodyInput,
     bodyError,
     ngWordErrors.body
-      ? NG_WORD_ERROR_MESSAGE
+      ? t("validation_ng_word")
       : (hasAttemptedSubmit || bodyInput.value.length > 0)
         ? baseErrors.body
         : ""
@@ -739,7 +1085,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     messageToManagerInput,
     messageToManagerError,
     ngWordErrors.messageToManager
-      ? NG_WORD_ERROR_MESSAGE
+      ? t("validation_ng_word")
       : baseErrors.messageToManager
   );
   agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
@@ -799,16 +1145,16 @@ function saveDraft() {
 
   if (!hasDraft) {
     draftStorage.remove();
-    draftStatus.textContent = "下書き未保存";
+    setDraftStatus("draft_none");
     return;
   }
 
   const saved = draftStorage.set(JSON.stringify(data));
-  draftStatus.textContent = saved ? "この端末に下書きを保存しました" : "下書き保存は利用できません";
+  setDraftStatus(saved ? "draft_saved" : "draft_unavailable");
 }
 
 function scheduleDraftSave() {
-  draftStatus.textContent = "下書きを保存しています……";
+  setDraftStatus("draft_saving");
   window.clearTimeout(saveTimer);
   saveTimer = window.setTimeout(saveDraft, DRAFT_SAVE_DELAY_MS);
 }
@@ -827,11 +1173,11 @@ function restoreDraft() {
     bodyInput.value = data.body ?? "";
     messageToManagerInput.value = data.messageToManager ?? "";
     agreementInput.checked = Boolean(data.agreement);
-    draftStatus.textContent = "保存されていた下書きを復元しました";
+    setDraftStatus("draft_restored");
   } catch (error) {
     console.error("下書きの復元に失敗しました。", error);
     draftStorage.remove();
-    draftStatus.textContent = "下書き未保存";
+    setDraftStatus("draft_none");
   }
 
   updateCharacterCounts();
@@ -847,26 +1193,32 @@ function clearDraft({ askConfirmation = true } = {}) {
     agreementInput.checked;
 
   if (askConfirmation && hasContent) {
-    const shouldClear = window.confirm("この端末に保存された下書きと入力内容を消しますか？");
+    const shouldClear = window.confirm(t("draft_clear_confirm"));
     if (!shouldClear) return;
   }
 
   form.reset();
   draftStorage.remove();
-  draftStatus.textContent = "下書きを削除しました";
+  setDraftStatus("draft_deleted");
   hasAttemptedSubmit = false;
   updateCharacterCounts();
   updateValidationState({ showBaseErrors: false });
 }
 
-function openPreview() {
+function updatePreviewContent() {
   const data = getFormData();
 
   previewLetterTitle.textContent = data.title;
   previewLetterBody.textContent = data.body;
-  previewLetterSender.textContent = data.senderName ? `差出人　${data.senderName}` : "差出人　名もなき旅人";
+  previewLetterSender.textContent = data.senderName
+    ? t("preview_sender", { name: data.senderName })
+    : t("preview_anonymous");
   previewMessageToManagerWrapper.hidden = !data.messageToManager;
   previewMessageToManager.textContent = data.messageToManager;
+}
+
+function openPreview() {
+  updatePreviewContent();
 
   previewModal.showModal();
   document.body.classList.add("modal-open");
@@ -921,14 +1273,14 @@ async function sendLetterToGas() {
   });
 
   if (!response.ok) {
-    throw new Error(`HTTPエラー: ${response.status}`);
+    throw new Error(t("submission_failed"));
   }
 
   const result = await response.json();
 
 if (!result.success) {
   throw new Error(
-    result.message || "GASへの保存に失敗しました。"
+    result.message || t("submission_failed")
   );
 }
 
@@ -970,6 +1322,12 @@ form.addEventListener("submit", (event) => {
   if (!validateForm()) return;
   saveDraft();
   openPreview();
+});
+
+languageButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setLanguage(button.dataset.language);
+  });
 });
 
 letterSearchForm.addEventListener("submit", searchLetters);
@@ -1063,5 +1421,5 @@ restoreDraft();
 
 // ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();
-loadFaqContent();
 loadPublicationStatus();
+initializeI18n();
