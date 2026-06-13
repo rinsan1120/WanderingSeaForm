@@ -1,4 +1,4 @@
-(Q)I want to remove a letter I submitted from HYŌHAKU NO UMI.
+(Q)I want to remove a letter I submitted from Wandering Sea.
 (A)Please use the Contact button on this site to send the stationmaster a direct message.
 Including the letter ID, title, and sender information will help us process your request smoothly.
 
@@ -9,9 +9,9 @@ If you submitted your letter before that date and still cannot find it, please c
 (Q)I found a typo in my submitted letter and want it corrected before publication.
 (A)Unfortunately, the stationmaster cannot determine whether a word is a typo or was written intentionally. Please review your letter carefully before submitting it.
 
-(Q)I want my letter displayed in a specific location in HYŌHAKU NO UMI.
+(Q)I want my letter displayed in a specific location in Wandering Sea.
 (A)We are sorry, but you cannot request a specific display location.
 
-(Q)I want to find a letter I previously submitted in HYŌHAKU NO UMI.
-(A)Use "Find a Letter" on this site to look up the letter ID. Enter that ID into the search system in HYŌHAKU NO UMI to locate the letter.
+(Q)I want to find a letter I previously submitted in Wandering Sea.
+(A)Use "Find a Letter" on this site to look up the letter ID. Enter that ID into the search system in Wandering Sea to locate the letter.
 The interface shown is slightly outdated, but detailed instructions are available in this [YouTube video](https://youtu.be/uoa8-pQY838?si=qIfj0zZn3sSwin7B).
