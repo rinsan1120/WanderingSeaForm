@@ -111,6 +111,8 @@ const languageStorage = {
 const turnstileError = document.getElementById("turnstileError");
 const metaDescription = document.querySelector('meta[name="description"]');
 const languageButtons = document.querySelectorAll("[data-language]");
+const accordionSectionLinks =
+  document.querySelectorAll("[data-accordion-section-link]");
 
 let turnstileToken = "";
 const form = document.getElementById("submissionForm");
@@ -1299,6 +1301,30 @@ function closeSubmissionScene() {
   }, 500);
 }
 
+function openAccordionSectionFromLink(event) {
+  const targetId = event.currentTarget.getAttribute("href")?.slice(1);
+  if (!targetId) return;
+
+  const section = document.getElementById(targetId);
+  if (!section) return;
+
+  const details = [...section.children].find((element) =>
+    element.matches(
+      "details.letter-search-section, details.faq-section, details.contact-section"
+    )
+  );
+  if (!details) return;
+
+  event.preventDefault();
+  details.open = true;
+  section.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+    block: "start"
+  });
+}
+
 [
   senderNameInput,
   titleInput,
@@ -1328,6 +1354,10 @@ languageButtons.forEach((button) => {
   button.addEventListener("click", () => {
     setLanguage(button.dataset.language);
   });
+});
+
+accordionSectionLinks.forEach((link) => {
+  link.addEventListener("click", openAccordionSectionFromLink);
 });
 
 letterSearchForm.addEventListener("submit", searchLetters);
