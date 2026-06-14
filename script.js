@@ -3,7 +3,7 @@ const LANGUAGE_STORAGE_KEY = "hyohaku-letter-form-language";
 const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwRZI7AirEh6sVzNouDMHIc2pjF0KS0_h0sNjXtB54ZYPfwPoyjXU9N8HaVw0sORYDh/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRZ1l4rEFJvz3SGcsuk-SsCowSwEanLV4GqdNfR-TmV5XSrKzX63ahiJaZdRFfSGOysQ/exec";
 const LANGUAGE_CONTENT_URL = "content/language.json";
 const FAQ_CONTENT_URLS = {
   ja: "content/faq-ja.txt",
