@@ -14,10 +14,16 @@ const LETTER_RULES_URLS = {
   en: "content/letter-guidelines-en.html"
 };
 const PUBLICATION_STATUS_API_URL =
-  "https://script.google.com/macros/s/AKfycbxKP3hYT3CVaqZRCS8b8qvOK_41JCf5ADt9xr-I7TICG0t4YdlmFNtTXxXfKSI4CqqAtQ/exec";
+  "https://script.google.com/macros/s/AKfycbx7OJKTtHheVcQHut7tBKR2t0PB_dGoQvbW18eagfLOEuoBhspQMSnYMfXsCp6Wao2-GQ/exec";
 const PUBLICATION_STATUS_CALLBACK_NAME =
   "handlePublicationStatusResponse";
-const PUBLICATION_STATUS_TIMEOUT_MS = 10000;
+
+const PUBLICATION_STATUS_TIMEOUT_MS = 15000;
+const PUBLICATION_STATUS_MAX_RETRIES = 3;
+const PUBLICATION_STATUS_RETRY_DELAY_MS = 1500;
+const PUBLICATION_STATUS_CACHE_KEY =
+  "hyohaku-publication-status-cache-v1";
+const PUBLICATION_STATUS_CACHE_BUCKET_MS = 5 * 60 * 1000;
 const LETTER_SEARCH_API_URL =
   "https://script.google.com/macros/s/AKfycbxkSc8MyUuOV_kRmEEx_xThmehCWpShYOpqnP4fbLdjVpwx5njr5A3lneQlS__bD-Wurg/exec";
 const LETTER_SEARCH_TIMEOUT_MS = 15000;
@@ -221,6 +227,7 @@ let publicationStatusTimer = null;
 let publicationStatusSettled = false;
 let publicationStatusState = "loading";
 let publicationStatusValue = null;
+let publicationStatusRetryCount = 0;
 let letterSearchController = null;
 let letterSearchStatusKey = "";
 let letterSearchErrorKey = "";
@@ -391,7 +398,29 @@ async function initializeI18n() {
 
   await setLanguage(preferredLanguage, { save: false });
 }
+function getCachedPublicationStatus() {
+  try {
+    const cachedValue =
+      window.localStorage.getItem(PUBLICATION_STATUS_CACHE_KEY);
 
+    return formatPublicationStatusDate(cachedValue)
+      ? cachedValue
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCachedPublicationStatus(value) {
+  try {
+    window.localStorage.setItem(
+      PUBLICATION_STATUS_CACHE_KEY,
+      value
+    );
+  } catch {
+    // 保存できない環境でも表示処理は継続する。
+  }
+}
 function cleanupPublicationStatusRequest() {
   window.clearTimeout(publicationStatusTimer);
   publicationStatusTimer = null;
@@ -400,12 +429,40 @@ function cleanupPublicationStatusRequest() {
   publicationStatusScript = null;
 }
 
-function showPublicationStatusError() {
+function handlePublicationStatusFailure() {
   if (publicationStatusSettled) return;
 
-  publicationStatusSettled = true;
-  publicationStatusState = "error";
   cleanupPublicationStatusRequest();
+
+  if (
+    publicationStatusRetryCount <
+    PUBLICATION_STATUS_MAX_RETRIES
+  ) {
+    const retryDelay =
+      PUBLICATION_STATUS_RETRY_DELAY_MS *
+      (publicationStatusRetryCount + 1);
+
+    publicationStatusRetryCount += 1;
+
+    window.setTimeout(() => {
+      requestPublicationStatus();
+    }, retryDelay);
+
+    return;
+  }
+
+  const cachedValue = getCachedPublicationStatus();
+
+  publicationStatusSettled = true;
+
+  if (cachedValue) {
+    publicationStatusState = "success";
+    publicationStatusValue = cachedValue;
+  } else {
+    publicationStatusState = "error";
+    publicationStatusValue = null;
+  }
+
   renderPublicationStatus();
 }
 
@@ -449,16 +506,19 @@ function formatPublicationStatusDate(value, language = currentLanguage) {
 function handlePublicationStatusResponse(data) {
   if (publicationStatusSettled) return;
 
-  const formattedDate =
-    formatPublicationStatusDate(data?.last_updated);
+  const value = data?.last_updated;
+  const formattedDate = formatPublicationStatusDate(value);
+
   if (!formattedDate) {
-    showPublicationStatusError();
+    handlePublicationStatusFailure();
     return;
   }
 
   publicationStatusSettled = true;
   publicationStatusState = "success";
-  publicationStatusValue = data.last_updated;
+  publicationStatusValue = value;
+
+  saveCachedPublicationStatus(value);
   cleanupPublicationStatusRequest();
   renderPublicationStatus();
 }
@@ -466,34 +526,69 @@ function handlePublicationStatusResponse(data) {
 window[PUBLICATION_STATUS_CALLBACK_NAME] =
   handlePublicationStatusResponse;
 
-function loadPublicationStatus() {
-  if (!publicationStatusText) return;
+function requestPublicationStatus() {
+  if (publicationStatusSettled) return;
 
   try {
+    cleanupPublicationStatusRequest();
+
     const url = new URL(PUBLICATION_STATUS_API_URL);
+
     url.searchParams.set(
       "callback",
       PUBLICATION_STATUS_CALLBACK_NAME
     );
-    url.searchParams.set("_", String(Date.now()));
 
-    publicationStatusScript = document.createElement("script");
+    const cacheBucket = Math.floor(
+      Date.now() / PUBLICATION_STATUS_CACHE_BUCKET_MS
+    );
+
+    url.searchParams.set("_", String(cacheBucket));
+
+    publicationStatusScript =
+      document.createElement("script");
+
     publicationStatusScript.src = url.href;
     publicationStatusScript.async = true;
+
     publicationStatusScript.addEventListener(
       "error",
-      showPublicationStatusError,
+      handlePublicationStatusFailure,
       { once: true }
     );
 
     publicationStatusTimer = window.setTimeout(
-      showPublicationStatusError,
+      handlePublicationStatusFailure,
       PUBLICATION_STATUS_TIMEOUT_MS
     );
+
     document.head.append(publicationStatusScript);
-  } catch {
-    showPublicationStatusError();
+  } catch (error) {
+    console.error(
+      "掲載状況の取得処理を開始できませんでした。",
+      error
+    );
+
+    handlePublicationStatusFailure();
   }
+}
+
+function loadPublicationStatus() {
+  if (!publicationStatusText) return;
+
+  publicationStatusSettled = false;
+  publicationStatusState = "loading";
+  publicationStatusRetryCount = 0;
+
+  const cachedValue = getCachedPublicationStatus();
+
+  if (cachedValue) {
+    publicationStatusValue = cachedValue;
+    publicationStatusState = "success";
+    renderPublicationStatus();
+  }
+
+  requestPublicationStatus();
 }
 
 function createLetterSearchResultField(label, value) {
