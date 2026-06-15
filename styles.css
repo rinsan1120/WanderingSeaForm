@@ -1196,6 +1196,17 @@ textarea[aria-invalid="true"] {
   letter-spacing: 0.16em;
 }
 
+.site-footer__copyright {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.site-footer__pending-count {
+  margin-left: 0.25em;
+  font-size: 0.9em;
+  opacity: 0.72;
+}
+
 .letter-search-modal {
   width: min(720px, calc(100% - 30px));
   max-height: 88svh;

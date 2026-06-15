@@ -17,8 +17,13 @@ const PUBLICATION_STATUS_API_URL =
   "https://script.google.com/macros/s/AKfycbx7OJKTtHheVcQHut7tBKR2t0PB_dGoQvbW18eagfLOEuoBhspQMSnYMfXsCp6Wao2-GQ/exec";
 const PUBLICATION_STATUS_CALLBACK_NAME =
   "handlePublicationStatusResponse";
+const PENDING_REVIEW_COUNT_API_URL =
+  "https://script.google.com/macros/s/AKfycbzwC2ZsBcOfPnBNu-nnbJBWhMKGW670FVh34iAeqOkR3vIentT86w_MzOhW2xrl-aXC5w/exec";
+const PENDING_REVIEW_COUNT_CALLBACK_NAME =
+  "handlePendingReviewCountResponse";
 
 const PUBLICATION_STATUS_TIMEOUT_MS = 15000;
+const PENDING_REVIEW_COUNT_TIMEOUT_MS = 15000;
 const PUBLICATION_STATUS_MAX_RETRIES = 3;
 const PUBLICATION_STATUS_RETRY_DELAY_MS = 1500;
 const PUBLICATION_STATUS_CACHE_KEY =
@@ -160,6 +165,8 @@ const faqList = document.getElementById("faqList");
 const faqStatus = document.getElementById("faqStatus");
 const publicationStatusText =
   document.getElementById("publicationStatusText");
+const pendingReviewCount =
+  document.getElementById("pendingReviewCount");
 const letterSearchForm = document.getElementById("letterSearchForm");
 const letterSearchNameInput =
   document.getElementById("letterSearchName");
@@ -228,6 +235,9 @@ let publicationStatusSettled = false;
 let publicationStatusState = "loading";
 let publicationStatusValue = null;
 let publicationStatusRetryCount = 0;
+let pendingReviewCountScript = null;
+let pendingReviewCountTimer = null;
+let pendingReviewCountSettled = false;
 let letterSearchController = null;
 let letterSearchStatusKey = "";
 let letterSearchErrorKey = "";
@@ -589,6 +599,94 @@ function loadPublicationStatus() {
   }
 
   requestPublicationStatus();
+}
+
+function cleanupPendingReviewCountRequest() {
+  window.clearTimeout(pendingReviewCountTimer);
+  pendingReviewCountTimer = null;
+
+  pendingReviewCountScript?.remove();
+  pendingReviewCountScript = null;
+}
+
+function handlePendingReviewCountFailure() {
+  if (pendingReviewCountSettled) return;
+
+  pendingReviewCountSettled = true;
+  cleanupPendingReviewCountRequest();
+
+  if (pendingReviewCount) {
+    pendingReviewCount.textContent = "(--)";
+  }
+}
+
+function handlePendingReviewCountResponse(data) {
+  if (pendingReviewCountSettled) return;
+
+  const count = data?.pending_review_count;
+  const isValid =
+    data !== null &&
+    typeof data === "object" &&
+    data.status === "success" &&
+    typeof count === "number" &&
+    Number.isFinite(count) &&
+    Number.isInteger(count) &&
+    count >= 0;
+
+  if (!isValid) {
+    handlePendingReviewCountFailure();
+    return;
+  }
+
+  pendingReviewCountSettled = true;
+  cleanupPendingReviewCountRequest();
+
+  if (pendingReviewCount) {
+    pendingReviewCount.textContent = `(${count})`;
+  }
+}
+
+window[PENDING_REVIEW_COUNT_CALLBACK_NAME] =
+  handlePendingReviewCountResponse;
+
+function loadPendingReviewCount() {
+  if (!pendingReviewCount) return;
+
+  cleanupPendingReviewCountRequest();
+  pendingReviewCountSettled = false;
+  pendingReviewCount.textContent = "(--)";
+
+  try {
+    const url = new URL(PENDING_REVIEW_COUNT_API_URL);
+    url.searchParams.set(
+      "callback",
+      PENDING_REVIEW_COUNT_CALLBACK_NAME
+    );
+    url.searchParams.set("_", String(Date.now()));
+
+    pendingReviewCountScript =
+      document.createElement("script");
+    pendingReviewCountScript.src = url.href;
+    pendingReviewCountScript.async = true;
+    pendingReviewCountScript.addEventListener(
+      "error",
+      handlePendingReviewCountFailure,
+      { once: true }
+    );
+
+    pendingReviewCountTimer = window.setTimeout(
+      handlePendingReviewCountFailure,
+      PENDING_REVIEW_COUNT_TIMEOUT_MS
+    );
+
+    document.head.append(pendingReviewCountScript);
+  } catch (error) {
+    console.error(
+      "判定待ち件数の取得処理を開始できませんでした。",
+      error
+    );
+    handlePendingReviewCountFailure();
+  }
 }
 
 function createLetterSearchResultField(label, value) {
@@ -1565,4 +1663,5 @@ restoreDraft();
 // ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();
 loadPublicationStatus();
+loadPendingReviewCount();
 initializeI18n();
