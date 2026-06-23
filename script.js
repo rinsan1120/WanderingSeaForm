@@ -1334,7 +1334,13 @@ async function loadNgWords() {
 
 function saveDraft() {
   const data = getFormData();
-  const hasDraft = data.senderName || data.title || data.body || data.messageToManager || data.agreement;
+  const draftData = {
+    senderName: data.senderName,
+    title: data.title,
+    body: data.body,
+    messageToManager: data.messageToManager
+  };
+  const hasDraft = draftData.senderName || draftData.title || draftData.body || draftData.messageToManager;
 
   if (!hasDraft) {
     draftStorage.remove();
@@ -1342,7 +1348,7 @@ function saveDraft() {
     return;
   }
 
-  const saved = draftStorage.set(JSON.stringify(data));
+  const saved = draftStorage.set(JSON.stringify(draftData));
   setDraftStatus(saved ? "draft_saved" : "draft_unavailable");
 }
 
@@ -1355,6 +1361,7 @@ function scheduleDraftSave() {
 function restoreDraft() {
   const savedDraft = draftStorage.get();
   if (!savedDraft) {
+    agreementInput.checked = false;
     updateCharacterCounts();
     return;
   }
@@ -1365,10 +1372,11 @@ function restoreDraft() {
     titleInput.value = data.title ?? "";
     bodyInput.value = data.body ?? "";
     messageToManagerInput.value = data.messageToManager ?? "";
-    agreementInput.checked = Boolean(data.agreement);
+    agreementInput.checked = false;
     setDraftStatus("draft_restored");
   } catch (error) {
     console.error("下書きの復元に失敗しました。", error);
+    agreementInput.checked = false;
     draftStorage.remove();
     setDraftStatus("draft_none");
   }
