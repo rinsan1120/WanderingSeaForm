@@ -200,6 +200,8 @@ const htmlFallbackTranslations = {
   document_title: document.title,
   meta_description: metaDescription?.content ?? ""
 };
+// data-i18n付き要素のHTML内テキストは、翻訳データ取得失敗時のフォールバック。
+// 通常表示の文言は content/language.json を正とする。
 document.querySelectorAll("[data-i18n]").forEach((element) => {
   htmlFallbackTranslations[element.dataset.i18n] = element.textContent.trim();
 });
