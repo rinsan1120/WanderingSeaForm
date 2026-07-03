@@ -682,6 +682,23 @@ a {
   white-space: nowrap;
 }
 
+.submission-language-notice {
+  margin-top: 12px;
+  max-width: 680px;
+}
+
+.letter-panel__header .submission-language-notice span {
+  margin-top: 0;
+  color: #ff8f8f;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.letter-panel__header .submission-language-notice__title {
+  margin-bottom: 2px;
+}
+
 #submissionForm {
   padding: 34px 30px 36px;
 }

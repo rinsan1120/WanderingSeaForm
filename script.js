@@ -3,6 +3,7 @@ const LANGUAGE_STORAGE_KEY = "hyohaku-letter-form-language";
 const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
+const HANGUL_PATTERN = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRZ1l4rEFJvz3SGcsuk-SsCowSwEanLV4GqdNfR-TmV5XSrKzX63ahiJaZdRFfSGOysQ/exec";
 const LANGUAGE_CONTENT_URL = "content/language.json";
 const FAQ_CONTENT_URLS = {
@@ -52,6 +53,7 @@ const DEFAULT_TRANSLATIONS = {
   validation_manager_max: "駅長へのご要望・ご連絡事項は500文字以内で入力してください。",
   validation_agreement: "内容を確認し、同意欄にチェックを入れてください。",
   validation_ng_word: "使用できない単語が含まれています。内容をご確認ください。",
+  validation_hangul_not_allowed: "韓国語を含むお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n죄송합니다.\n월드 용량 등의 사정으로 인해 한국어가 포함된 편지는 접수할 수 없습니다.\n일본어 또는 영어로 작성해 주세요.",
   turnstile_expired: "確認の有効期限が切れました。もう一度確認してください。",
   turnstile_error: "確認処理に失敗しました。もう一度お試しください。",
   search_loading: "お手紙を探しています……",
@@ -1219,6 +1221,10 @@ function containsNgWord(value) {
   return normalizedNgWords.some((word) => normalizedValue.includes(word));
 }
 
+function containsHangul(value) {
+  return HANGUL_PATTERN.test(String(value));
+}
+
 function getValidationState() {
   const data = getFormData();
   const baseErrors = {
@@ -1240,48 +1246,69 @@ function getValidationState() {
     body: containsNgWord(bodyInput.value),
     messageToManager: containsNgWord(messageToManagerInput.value)
   };
+  const hangulErrors = {
+    senderName: containsHangul(senderNameInput.value),
+    title: containsHangul(titleInput.value),
+    body: containsHangul(bodyInput.value),
+    messageToManager: containsHangul(messageToManagerInput.value)
+  };
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
+  const hasHangulError = Object.values(hangulErrors).some(Boolean);
 
   return {
     baseErrors,
     ngWordErrors,
+    hangulErrors,
     isValid:
       ngWordsStatus === "ready" &&
       !hasBaseError &&
       !hasNgWordError &&
+      !hasHangulError &&
       Boolean(turnstileToken)
   };
 }
 
 function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSubmit) {
-  const { baseErrors, ngWordErrors } = validationState;
+  const { baseErrors, ngWordErrors, hangulErrors } = validationState;
 
   setFieldError(
     senderNameInput,
     senderNameError,
-    ngWordErrors.senderName ? t("validation_ng_word") : showBaseErrors ? baseErrors.senderName : ""
+    hangulErrors.senderName
+      ? t("validation_hangul_not_allowed")
+      : ngWordErrors.senderName
+        ? t("validation_ng_word")
+        : showBaseErrors ? baseErrors.senderName : ""
   );
   setFieldError(
     titleInput,
     titleError,
-    ngWordErrors.title ? t("validation_ng_word") : showBaseErrors ? baseErrors.title : ""
+    hangulErrors.title
+      ? t("validation_hangul_not_allowed")
+      : ngWordErrors.title
+        ? t("validation_ng_word")
+        : showBaseErrors ? baseErrors.title : ""
   );
   setFieldError(
     bodyInput,
     bodyError,
-    ngWordErrors.body
-      ? t("validation_ng_word")
-      : (hasAttemptedSubmit || bodyInput.value.length > 0)
-        ? baseErrors.body
-        : ""
+    hangulErrors.body
+      ? t("validation_hangul_not_allowed")
+      : ngWordErrors.body
+        ? t("validation_ng_word")
+        : (hasAttemptedSubmit || bodyInput.value.length > 0)
+          ? baseErrors.body
+          : ""
   );
   setFieldError(
     messageToManagerInput,
     messageToManagerError,
-    ngWordErrors.messageToManager
-      ? t("validation_ng_word")
-      : baseErrors.messageToManager
+    hangulErrors.messageToManager
+      ? t("validation_hangul_not_allowed")
+      : ngWordErrors.messageToManager
+        ? t("validation_ng_word")
+        : baseErrors.messageToManager
   );
   agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
   agreementInput.setAttribute("aria-invalid", showBaseErrors && baseErrors.agreement ? "true" : "false");
