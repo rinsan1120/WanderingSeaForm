@@ -653,12 +653,16 @@ a {
 }
 
 .letter-panel__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 20px;
   padding: 26px 30px 22px;
   border-bottom: 1px solid var(--line);
+}
+
+.letter-panel__header > div {
+  min-width: 0;
 }
 
 .letter-panel__header p {
@@ -675,10 +679,12 @@ a {
 }
 
 .letter-panel__header .draft-status {
+  width: 240px;
   color: var(--text-sub);
   font-family: "Zen Kaku Gothic New", sans-serif;
   font-size: 0.74rem;
   letter-spacing: 0;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -1915,7 +1921,13 @@ textarea[aria-invalid="true"] {
   }
 
   .letter-panel__header {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .letter-panel__header .draft-status {
+    width: auto;
+    text-align: left;
+    white-space: normal;
   }
 
   textarea {
