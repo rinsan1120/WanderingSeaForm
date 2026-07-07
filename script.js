@@ -4,6 +4,45 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const HANGUL_PATTERN = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+const CHINESE_PHRASES = [
+  "这封",
+  "我们",
+  "你们",
+  "他们",
+  "谢谢",
+  "请问",
+  "对不起",
+  "没关系",
+  "什么时候",
+  "为什么",
+  "怎么办",
+  "怎么样",
+  "怎么会",
+  "怎么可能",
+  "喜欢",
+  "觉得",
+  "已经",
+  "没有",
+  "还是",
+  "因为",
+  "如果",
+  "然后",
+  "不会",
+  "不是",
+  "一个",
+  "这个",
+  "那个",
+  "这么",
+  "这样",
+  "这里",
+  "那里",
+  "非常感谢",
+  "祝你",
+  "希望你",
+  "写给你",
+  "你还记得",
+  "我想你"
+];
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRZ1l4rEFJvz3SGcsuk-SsCowSwEanLV4GqdNfR-TmV5XSrKzX63ahiJaZdRFfSGOysQ/exec";
 const LANGUAGE_CONTENT_URL = "content/language.json";
 const FAQ_CONTENT_URLS = {
@@ -53,7 +92,8 @@ const DEFAULT_TRANSLATIONS = {
   validation_manager_max: "駅長へのご要望・ご連絡事項は500文字以内で入力してください。",
   validation_agreement: "内容を確認し、同意欄にチェックを入れてください。",
   validation_ng_word: "使用できない単語が含まれています。内容をご確認ください。",
-  validation_hangul_not_allowed: "韓国語を含むお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n죄송합니다.\n월드 용량 등의 사정으로 인해 한국어가 포함된 편지는 접수할 수 없습니다.\n일본어 또는 영어로 작성해 주세요.",
+  validation_hangul_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n죄송합니다.\n월드 용량 등의 사정으로 일본어와 영어 이외의 언어로 작성된 편지는 접수할 수 없습니다.\n일본어 또는 영어로 작성해 주세요.",
+  validation_chinese_phrase_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。",
   turnstile_expired: "確認の有効期限が切れました。もう一度確認してください。",
   turnstile_error: "確認処理に失敗しました。もう一度お試しください。",
   search_loading: "お手紙を探しています……",
@@ -1225,6 +1265,10 @@ function containsHangul(value) {
   return HANGUL_PATTERN.test(String(value));
 }
 
+function containsChinesePhrase(value) {
+  return CHINESE_PHRASES.some((phrase) => String(value).includes(phrase));
+}
+
 function getValidationState() {
   const data = getFormData();
   const baseErrors = {
@@ -1252,63 +1296,91 @@ function getValidationState() {
     body: containsHangul(bodyInput.value),
     messageToManager: containsHangul(messageToManagerInput.value)
   };
+  const chinesePhraseErrors = {
+    senderName: containsChinesePhrase(senderNameInput.value),
+    title: containsChinesePhrase(titleInput.value),
+    body: containsChinesePhrase(bodyInput.value),
+    messageToManager: containsChinesePhrase(messageToManagerInput.value)
+  };
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
   const hasHangulError = Object.values(hangulErrors).some(Boolean);
+  const hasChinesePhraseError = Object.values(chinesePhraseErrors).some(Boolean);
 
   return {
     baseErrors,
     ngWordErrors,
     hangulErrors,
+    chinesePhraseErrors,
     isValid:
       ngWordsStatus === "ready" &&
       !hasBaseError &&
       !hasNgWordError &&
       !hasHangulError &&
+      !hasChinesePhraseError &&
       Boolean(turnstileToken)
   };
 }
 
+function getFieldValidationMessage({
+  chinesePhraseError,
+  hangulError,
+  ngWordError,
+  baseError,
+  showBaseError
+}) {
+  if (chinesePhraseError) return t("validation_chinese_phrase_not_allowed");
+  if (hangulError) return t("validation_hangul_not_allowed");
+  if (ngWordError) return t("validation_ng_word");
+  return showBaseError ? baseError : "";
+}
+
 function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSubmit) {
-  const { baseErrors, ngWordErrors, hangulErrors } = validationState;
+  const { baseErrors, ngWordErrors, hangulErrors, chinesePhraseErrors } = validationState;
 
   setFieldError(
     senderNameInput,
     senderNameError,
-    hangulErrors.senderName
-      ? t("validation_hangul_not_allowed")
-      : ngWordErrors.senderName
-        ? t("validation_ng_word")
-        : showBaseErrors ? baseErrors.senderName : ""
+    getFieldValidationMessage({
+      chinesePhraseError: chinesePhraseErrors.senderName,
+      hangulError: hangulErrors.senderName,
+      ngWordError: ngWordErrors.senderName,
+      baseError: baseErrors.senderName,
+      showBaseError: showBaseErrors
+    })
   );
   setFieldError(
     titleInput,
     titleError,
-    hangulErrors.title
-      ? t("validation_hangul_not_allowed")
-      : ngWordErrors.title
-        ? t("validation_ng_word")
-        : showBaseErrors ? baseErrors.title : ""
+    getFieldValidationMessage({
+      chinesePhraseError: chinesePhraseErrors.title,
+      hangulError: hangulErrors.title,
+      ngWordError: ngWordErrors.title,
+      baseError: baseErrors.title,
+      showBaseError: showBaseErrors
+    })
   );
   setFieldError(
     bodyInput,
     bodyError,
-    hangulErrors.body
-      ? t("validation_hangul_not_allowed")
-      : ngWordErrors.body
-        ? t("validation_ng_word")
-        : (hasAttemptedSubmit || bodyInput.value.length > 0)
-          ? baseErrors.body
-          : ""
+    getFieldValidationMessage({
+      chinesePhraseError: chinesePhraseErrors.body,
+      hangulError: hangulErrors.body,
+      ngWordError: ngWordErrors.body,
+      baseError: baseErrors.body,
+      showBaseError: hasAttemptedSubmit || bodyInput.value.length > 0
+    })
   );
   setFieldError(
     messageToManagerInput,
     messageToManagerError,
-    hangulErrors.messageToManager
-      ? t("validation_hangul_not_allowed")
-      : ngWordErrors.messageToManager
-        ? t("validation_ng_word")
-        : baseErrors.messageToManager
+    getFieldValidationMessage({
+      chinesePhraseError: chinesePhraseErrors.messageToManager,
+      hangulError: hangulErrors.messageToManager,
+      ngWordError: ngWordErrors.messageToManager,
+      baseError: baseErrors.messageToManager,
+      showBaseError: true
+    })
   );
   agreementError.textContent = showBaseErrors ? baseErrors.agreement : "";
   agreementInput.setAttribute("aria-invalid", showBaseErrors && baseErrors.agreement ? "true" : "false");
