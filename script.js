@@ -1294,13 +1294,13 @@ function getValidationState() {
     senderName: containsHangul(senderNameInput.value),
     title: containsHangul(titleInput.value),
     body: containsHangul(bodyInput.value),
-    messageToManager: containsHangul(messageToManagerInput.value)
+    messageToManager: false
   };
   const chinesePhraseErrors = {
     senderName: containsChinesePhrase(senderNameInput.value),
     title: containsChinesePhrase(titleInput.value),
     body: containsChinesePhrase(bodyInput.value),
-    messageToManager: containsChinesePhrase(messageToManagerInput.value)
+    messageToManager: false
   };
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
