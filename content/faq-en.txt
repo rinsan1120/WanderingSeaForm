@@ -16,5 +16,13 @@ If you submitted your letter before that date and still cannot find it, please c
 (A)Use "Find a Letter" on this site to look up the letter ID. Enter that ID into the search system in Wandering Sea to locate the letter.
 The interface shown is slightly outdated, but detailed instructions are available in this [YouTube video](https://youtu.be/uoa8-pQY838?si=qIfj0zZn3sSwin7B).
 
+(Q)The letter I submitted has not been published.
+(A)There are two main possible reasons:
+
+1. The letter was not published because it violated the submission guidelines.
+2. The letter was written in a language other than Japanese or English.
+
+You can contact the Stationmaster through the inquiry form on this website to ask why your letter was not published. Please feel free to get in touch.
+
 (Q)What languages can be used when sending a letter?
 (A)Only Japanese and English are permitted.
