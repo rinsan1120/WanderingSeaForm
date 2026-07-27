@@ -4,6 +4,7 @@ const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
 const NG_WORDS_URL = "content/ng-words.json";
 const HANGUL_PATTERN = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+const EMOJI_PATTERN = /(?:\p{Regional_Indicator}{2}|[0-9#*]\uFE0F?\u20E3|(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\p{Emoji_Modifier}?(?:\u200D(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)\p{Emoji_Modifier}?)*)/u;
 const CHINESE_PHRASES = [
   "这封",
   "我们",
@@ -92,6 +93,7 @@ const DEFAULT_TRANSLATIONS = {
   validation_manager_max: "駅長へのご要望・ご連絡事項は500文字以内で入力してください。",
   validation_agreement: "内容を確認し、同意欄にチェックを入れてください。",
   validation_ng_word: "使用できない単語が含まれています。内容をご確認ください。",
+  validation_emoji_not_allowed: "絵文字は使用できません。絵文字を削除してから投函してください。",
   validation_hangul_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n죄송합니다.\n월드 용량 등의 사정으로 일본어와 영어 이외의 언어로 작성된 편지는 접수할 수 없습니다.\n일본어 또는 영어로 작성해 주세요.",
   validation_chinese_phrase_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n很抱歉。\n由于世界容量等方面的限制，无法接收使用日语或英语以外语言书写的信件。\n请使用日语或英语填写。",
   turnstile_expired: "確認の有効期限が切れました。もう一度確認してください。",
@@ -1269,6 +1271,10 @@ function containsChinesePhrase(value) {
   return CHINESE_PHRASES.some((phrase) => String(value).includes(phrase));
 }
 
+function containsEmoji(value) {
+  return EMOJI_PATTERN.test(String(value));
+}
+
 function getValidationState() {
   const data = getFormData();
   const baseErrors = {
@@ -1290,6 +1296,12 @@ function getValidationState() {
     body: containsNgWord(bodyInput.value),
     messageToManager: containsNgWord(messageToManagerInput.value)
   };
+  const emojiErrors = {
+    senderName: containsEmoji(senderNameInput.value),
+    title: containsEmoji(titleInput.value),
+    body: containsEmoji(bodyInput.value),
+    messageToManager: false
+  };
   const hangulErrors = {
     senderName: containsHangul(senderNameInput.value),
     title: containsHangul(titleInput.value),
@@ -1304,18 +1316,21 @@ function getValidationState() {
   };
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
+  const hasEmojiError = Object.values(emojiErrors).some(Boolean);
   const hasHangulError = Object.values(hangulErrors).some(Boolean);
   const hasChinesePhraseError = Object.values(chinesePhraseErrors).some(Boolean);
 
   return {
     baseErrors,
     ngWordErrors,
+    emojiErrors,
     hangulErrors,
     chinesePhraseErrors,
     isValid:
       ngWordsStatus === "ready" &&
       !hasBaseError &&
       !hasNgWordError &&
+      !hasEmojiError &&
       !hasHangulError &&
       !hasChinesePhraseError &&
       Boolean(turnstileToken)
@@ -1323,12 +1338,14 @@ function getValidationState() {
 }
 
 function getFieldValidationMessage({
+  emojiError,
   chinesePhraseError,
   hangulError,
   ngWordError,
   baseError,
   showBaseError
 }) {
+  if (emojiError) return t("validation_emoji_not_allowed");
   if (chinesePhraseError) return t("validation_chinese_phrase_not_allowed");
   if (hangulError) return t("validation_hangul_not_allowed");
   if (ngWordError) return t("validation_ng_word");
@@ -1336,12 +1353,13 @@ function getFieldValidationMessage({
 }
 
 function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSubmit) {
-  const { baseErrors, ngWordErrors, hangulErrors, chinesePhraseErrors } = validationState;
+  const { baseErrors, ngWordErrors, emojiErrors, hangulErrors, chinesePhraseErrors } = validationState;
 
   setFieldError(
     senderNameInput,
     senderNameError,
     getFieldValidationMessage({
+      emojiError: emojiErrors.senderName,
       chinesePhraseError: chinesePhraseErrors.senderName,
       hangulError: hangulErrors.senderName,
       ngWordError: ngWordErrors.senderName,
@@ -1353,6 +1371,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     titleInput,
     titleError,
     getFieldValidationMessage({
+      emojiError: emojiErrors.title,
       chinesePhraseError: chinesePhraseErrors.title,
       hangulError: hangulErrors.title,
       ngWordError: ngWordErrors.title,
@@ -1364,6 +1383,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     bodyInput,
     bodyError,
     getFieldValidationMessage({
+      emojiError: emojiErrors.body,
       chinesePhraseError: chinesePhraseErrors.body,
       hangulError: hangulErrors.body,
       ngWordError: ngWordErrors.body,
@@ -1375,6 +1395,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     messageToManagerInput,
     messageToManagerError,
     getFieldValidationMessage({
+      emojiError: emojiErrors.messageToManager,
       chinesePhraseError: chinesePhraseErrors.messageToManager,
       hangulError: hangulErrors.messageToManager,
       ngWordError: ngWordErrors.messageToManager,
@@ -1700,6 +1721,10 @@ closePreviewButton.addEventListener("click", closePreview);
 editButton.addEventListener("click", closePreview);
 submitLetterButton.addEventListener("click", async () => {
   if (isSubmitting) return;
+  if (!validateForm()) {
+    closePreview();
+    return;
+  }
 
   submitLetterButton.disabled = true;
 
