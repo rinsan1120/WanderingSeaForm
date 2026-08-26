@@ -197,6 +197,7 @@ const previewModal = document.getElementById("previewModal");
 const closePreviewButton = document.getElementById("closePreviewButton");
 const editButton = document.getElementById("editButton");
 const submitLetterButton = document.getElementById("submitLetterButton");
+const previewSending = document.getElementById("previewSending");
 const previewLetterTitle = document.getElementById("previewLetterTitle");
 const previewLetterBody = document.getElementById("previewLetterBody");
 const previewLetterSender = document.getElementById("previewLetterSender");
@@ -275,6 +276,7 @@ const letterRulesCache = new Map();
 const faqContentCache = new Map();
 let saveTimer = null;
 let isSubmitting = false;
+let isPreviewSubmitting = false;
 let hasAttemptedSubmit = false;
 let ngWordsStatus = "loading";
 let normalizedNgWords = [];
@@ -1556,6 +1558,15 @@ function openPreview() {
   });
 }
 
+function setPreviewSubmitting(isActive) {
+  isPreviewSubmitting = isActive;
+  previewSending.hidden = !isActive;
+  submitLetterButton.disabled = isActive;
+  editButton.disabled = isActive;
+  closePreviewButton.disabled = isActive;
+  previewModal.classList.toggle("is-submitting", isActive);
+}
+
 function closePreview() {
   previewModal.classList.remove("is-visible");
   document.body.classList.remove("modal-open");
@@ -1725,16 +1736,17 @@ clearDraftButton.addEventListener("click", () => clearDraft());
 closePreviewButton.addEventListener("click", closePreview);
 editButton.addEventListener("click", closePreview);
 submitLetterButton.addEventListener("click", async () => {
-  if (isSubmitting) return;
+  if (isSubmitting || isPreviewSubmitting) return;
   if (!validateForm()) {
     closePreview();
     return;
   }
 
-  submitLetterButton.disabled = true;
+  setPreviewSubmitting(true);
 
   try {
     await sendLetterToGas();
+    setPreviewSubmitting(false);
 
     // スプレッドシートへの保存成功後に投函演出を開始
     await runMockSubmission();
@@ -1743,7 +1755,7 @@ submitLetterButton.addEventListener("click", async () => {
 
    window.alert(error.message);
 
-    submitLetterButton.disabled = false;
+    setPreviewSubmitting(false);
   }
 });
 writeAnotherButton.addEventListener("click", closeSubmissionScene);
@@ -1770,12 +1782,12 @@ letterRulesModal.addEventListener("cancel", (event) => {
 });
 /* ここまで追加 */
 previewModal.addEventListener("click", (event) => {
-  if (event.target === previewModal) closePreview();
+  if (event.target === previewModal && !isPreviewSubmitting) closePreview();
 });
 
 previewModal.addEventListener("cancel", (event) => {
   event.preventDefault();
-  closePreview();
+  if (!isPreviewSubmitting) closePreview();
 });
 
 window.addEventListener("scroll", () => {
