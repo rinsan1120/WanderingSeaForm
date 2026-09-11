@@ -678,6 +678,11 @@ a {
   font-size: 0.76rem;
 }
 
+#draftStatus[hidden],
+#clearDraftButton[hidden] {
+  display: none;
+}
+
 .letter-panel__header .draft-status {
   width: 240px;
   color: var(--text-sub);

@@ -1809,7 +1809,9 @@ document.querySelectorAll(".reveal").forEach((element) => {
   revealObserver.observe(element);
 });
 
-restoreDraft();
+// ユーザー向け下書き機能は廃止済み。保存済み下書きは復元しない。
+agreementInput.checked = false;
+updateCharacterCounts();
 
 // ブラウザ側の判定は即時フィードバック用。GAS連携時は要望欄を含め、同じ条件をサーバー側でも必ず検証する。
 loadNgWords();

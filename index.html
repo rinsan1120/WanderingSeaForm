@@ -165,7 +165,7 @@
                 <span data-i18n="submission_language_notice">ワールド容量等の都合により、現在この海へ流せるお手紙は日本語と英語で綴られたものに限らせていただいております。ご理解・ご協力をお願いいたします。</span>
               </div>
             </div>
-            <p class="draft-status" id="draftStatus" role="status" aria-live="polite" data-i18n="draft_none">下書き未保存</p>
+            <p class="draft-status" id="draftStatus" hidden role="status" aria-live="polite" data-i18n="draft_none">下書き未保存</p>
           </div>
 
           <form id="submissionForm" novalidate>
@@ -300,7 +300,7 @@
             <p class="sample-notice">
             </p>
             <div class="form-actions">
-              <button class="button button--ghost" id="clearDraftButton" type="button" data-i18n="clear_draft">下書きを消す</button>
+              <button class="button button--ghost" id="clearDraftButton" hidden type="button" data-i18n="clear_draft">下書きを消す</button>
               <button class="button button--primary" id="confirmSubmissionButton" type="submit" data-i18n="confirm_submission" disabled>投函前に確認する</button>
             </div>
           </form>
