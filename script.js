@@ -1,4 +1,5 @@
 const DRAFT_STORAGE_KEY = "hyohaku-letter-form-draft-v1";
+const SUBMITTED_LETTERS_STORAGE_KEY = "hyohaku-letter-form-submitted-v1";
 const LANGUAGE_STORAGE_KEY = "hyohaku-letter-form-language";
 const DRAFT_SAVE_DELAY_MS = 450;
 const MOCK_SUBMISSION_DELAY_MS = 2400;
@@ -126,6 +127,7 @@ const DEFAULT_TRANSLATIONS = {
   guidelines_error: "注意事項を読み込めませんでした。時間をおいて再度お試しください。",
   preview_sender: "差出人　{name}",
   preview_anonymous: "差出人　名もなき旅人",
+  submission_duplicate: "このお手紙はすでに投函されています。\n同じ内容のお手紙を重複して投函することはできません。",
   submission_failed: "GASへの保存に失敗しました。"
 };
 
@@ -155,6 +157,48 @@ const draftStorage = {
     }
   }
 };
+
+const submittedLettersStorage = {
+  get() {
+    try {
+      const stored = window.localStorage.getItem(SUBMITTED_LETTERS_STORAGE_KEY);
+      if (stored === null) return [];
+      const hashes = JSON.parse(stored);
+      if (!Array.isArray(hashes) ||
+          !hashes.every((hash) => typeof hash === "string" && /^[a-f0-9]{64}$/.test(hash))) {
+        return null;
+      }
+      return hashes;
+    } catch {
+      console.warn("投函履歴の読み込みを利用できないため、重複チェックをスキップします。");
+      return null;
+    }
+  },
+  add(hash) {
+    if (!hash) return;
+    try {
+      const hashes = this.get();
+      if (hashes === null || hashes.includes(hash)) return;
+      window.localStorage.setItem(
+        SUBMITTED_LETTERS_STORAGE_KEY,
+        JSON.stringify([...hashes, hash])
+      );
+    } catch {
+      console.warn("投函履歴を保存できませんでした。");
+    }
+  }
+};
+
+async function createSubmittedLetterHash(data) {
+  try {
+    const value = JSON.stringify([data.senderName, data.title, data.body]);
+    const digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  } catch {
+    console.warn("投函内容のハッシュを生成できないため、重複チェックをスキップします。");
+    return null;
+  }
+}
 
 const languageStorage = {
   get() {
@@ -1753,7 +1797,15 @@ submitLetterButton.addEventListener("click", async () => {
   setPreviewSubmitting(true);
 
   try {
+    const submittedLetterHash = await createSubmittedLetterHash(getFormData());
+    if (submittedLetterHash && submittedLettersStorage.get()?.includes(submittedLetterHash)) {
+      setPreviewSubmitting(false);
+      window.alert(t("submission_duplicate"));
+      return;
+    }
+
     await sendLetterToGas();
+    submittedLettersStorage.add(submittedLetterHash);
     setPreviewSubmitting(false);
 
     // スプレッドシートへの保存成功後に投函演出を開始
