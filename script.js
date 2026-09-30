@@ -45,6 +45,17 @@ const CHINESE_PHRASES = [
   "你还记得",
   "我想你"
 ];
+const PORTUGUESE_PHRASES = [
+  "você",
+  "vocês",
+  "não",
+  "obrigado",
+  "obrigada",
+  "sinto sua falta",
+  "sinto a sua falta",
+  "minha falta",
+  "eu te amo"
+];
 const CHINESE_ADDITIONAL_PHRASES = [
   "沒有",
   "什麼",
@@ -107,6 +118,7 @@ const DEFAULT_TRANSLATIONS = {
   validation_emoji_not_allowed: "絵文字は使用できません。絵文字を削除してから投函してください。",
   validation_hangul_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n죄송합니다.\n월드 용량 등의 사정으로 일본어와 영어 이외의 언어로 작성된 편지는 접수할 수 없습니다.\n일본어 또는 영어로 작성해 주세요.",
   validation_chinese_phrase_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\n很抱歉。\n由于世界容量等方面的限制，无法接收使用日语或英语以外语言书写的信件。\n请使用日语或英语填写。",
+  validation_portuguese_phrase_not_allowed: "日本語と英語以外の言語で書かれたお手紙は、ワールド容量等の都合により掲載できません。\n日本語または英語でご記入ください。\n\nDesculpe.\nDevido às limitações de capacidade do mundo, não podemos aceitar cartas escritas em outros idiomas além de japonês ou inglês.\nPor favor, escreva em japonês ou inglês.",
   turnstile_expired: "確認の有効期限が切れました。もう一度確認してください。",
   turnstile_error: "確認処理に失敗しました。もう一度お試しください。",
   search_loading: "お手紙を探しています……",
@@ -1330,6 +1342,13 @@ function containsChinesePhrase(value) {
     SIMPLIFIED_CHINESE_CHARACTER_PATTERN.test(stringValue);
 }
 
+function containsPortuguesePhrase(value) {
+  const normalizedValue = String(value).normalize("NFKC").toLowerCase();
+  return PORTUGUESE_PHRASES.some((phrase) =>
+    new RegExp(`(^|[^\\p{L}\\p{M}])${phrase}($|[^\\p{L}\\p{M}])`, "u").test(normalizedValue)
+  );
+}
+
 function containsEmoji(value) {
   return EMOJI_PATTERN.test(String(value));
 }
@@ -1373,6 +1392,13 @@ function getValidationState() {
     body: containsChinesePhrase(bodyInput.value),
     messageToManager: false
   };
+  const portuguesePhraseErrors = {
+    senderName: containsPortuguesePhrase(senderNameInput.value),
+    title: containsPortuguesePhrase(titleInput.value),
+    body: containsPortuguesePhrase(bodyInput.value),
+    messageToManager: false
+  };
+  const hasPortuguesePhraseError = Object.values(portuguesePhraseErrors).some(Boolean);
   const hasBaseError = Object.values(baseErrors).some(Boolean);
   const hasNgWordError = Object.values(ngWordErrors).some(Boolean);
   const hasEmojiError = Object.values(emojiErrors).some(Boolean);
@@ -1385,6 +1411,7 @@ function getValidationState() {
     emojiErrors,
     hangulErrors,
     chinesePhraseErrors,
+    portuguesePhraseErrors,
     isValid:
       ngWordsStatus === "ready" &&
       !hasBaseError &&
@@ -1392,6 +1419,7 @@ function getValidationState() {
       !hasEmojiError &&
       !hasHangulError &&
       !hasChinesePhraseError &&
+      !hasPortuguesePhraseError &&
       Boolean(turnstileToken)
   };
 }
@@ -1399,6 +1427,7 @@ function getValidationState() {
 function getFieldValidationMessage({
   emojiError,
   chinesePhraseError,
+  portuguesePhraseError,
   hangulError,
   ngWordError,
   baseError,
@@ -1407,12 +1436,13 @@ function getFieldValidationMessage({
   if (emojiError) return t("validation_emoji_not_allowed");
   if (chinesePhraseError) return t("validation_chinese_phrase_not_allowed");
   if (hangulError) return t("validation_hangul_not_allowed");
+  if (portuguesePhraseError) return t("validation_portuguese_phrase_not_allowed");
   if (ngWordError) return t("validation_ng_word");
   return showBaseError ? baseError : "";
 }
 
 function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSubmit) {
-  const { baseErrors, ngWordErrors, emojiErrors, hangulErrors, chinesePhraseErrors } = validationState;
+  const { baseErrors, ngWordErrors, emojiErrors, hangulErrors, chinesePhraseErrors, portuguesePhraseErrors } = validationState;
 
   setFieldError(
     senderNameInput,
@@ -1420,6 +1450,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     getFieldValidationMessage({
       emojiError: emojiErrors.senderName,
       chinesePhraseError: chinesePhraseErrors.senderName,
+      portuguesePhraseError: portuguesePhraseErrors.senderName,
       hangulError: hangulErrors.senderName,
       ngWordError: ngWordErrors.senderName,
       baseError: baseErrors.senderName,
@@ -1432,6 +1463,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     getFieldValidationMessage({
       emojiError: emojiErrors.title,
       chinesePhraseError: chinesePhraseErrors.title,
+      portuguesePhraseError: portuguesePhraseErrors.title,
       hangulError: hangulErrors.title,
       ngWordError: ngWordErrors.title,
       baseError: baseErrors.title,
@@ -1444,6 +1476,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     getFieldValidationMessage({
       emojiError: emojiErrors.body,
       chinesePhraseError: chinesePhraseErrors.body,
+      portuguesePhraseError: portuguesePhraseErrors.body,
       hangulError: hangulErrors.body,
       ngWordError: ngWordErrors.body,
       baseError: baseErrors.body,
@@ -1456,6 +1489,7 @@ function renderValidationErrors(validationState, showBaseErrors = hasAttemptedSu
     getFieldValidationMessage({
       emojiError: emojiErrors.messageToManager,
       chinesePhraseError: chinesePhraseErrors.messageToManager,
+      portuguesePhraseError: portuguesePhraseErrors.messageToManager,
       hangulError: hangulErrors.messageToManager,
       ngWordError: ngWordErrors.messageToManager,
       baseError: baseErrors.messageToManager,

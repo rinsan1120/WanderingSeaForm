@@ -706,6 +706,23 @@ a {
   line-height: 1.7;
 }
 
+.submission-language-notice__english {
+  display: none;
+}
+
+html[lang="en"] .submission-language-notice__english {
+  display: block;
+}
+
+.letter-panel__header .submission-language-notice__english span {
+  margin-top: 12px;
+}
+
+.letter-panel__header .submission-language-notice__emphasis {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .letter-panel__header .submission-language-notice__title {
   margin-bottom: 2px;
 }
